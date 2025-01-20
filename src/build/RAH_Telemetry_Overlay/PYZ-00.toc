@@ -1,2 +1,0 @@
-('C:\\Users\\1raul\\Desktop\\iracing-input-telemetry-overlay\\src\\build\\RAH_Telemetry_Overlay\\PYZ-00.pyz',
- [])

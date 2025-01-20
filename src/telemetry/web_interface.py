@@ -1,3 +1,6 @@
+import eventlet
+eventlet.monkey_patch()
+
 from flask import Flask, render_template, send_from_directory
 from flask_socketio import SocketIO, Namespace
 from telemetry.data_provider import TelemetryDataProvider
@@ -5,9 +8,7 @@ import os
 import sys
 import time
 from threading import Thread
-import eventlet
 
-eventlet.monkey_patch()
 
 def resource_path(relative_path):
     """ Get the absolute path to the resource, works for dev and for PyInstaller """
