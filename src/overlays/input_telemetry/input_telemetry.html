@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <title>RAH iRacing Overlay</title>
-    <link rel="stylesheet" href="/static/css/styles.css">
-    <script src="/static/js/socket.io.min.js"></script>
-    <script src="/static/js/script.js"></script>
+    <link rel="stylesheet" href="{{ url_for('serve_static', overlay_name='input_telemetry', filename='input_telemetry.css') }}">
+    <script src="{{ url_for('serve_static', overlay_name='input_telemetry', filename='input_telemetry.js') }}"></script>
+    <script src="{{ url_for('serve_common_js', filename='socket.io.min.js') }}"></script>
 </head>
 <body>
     <div class="telemetry-container">
@@ -30,7 +30,7 @@
                         <div id="gear-display">4</div>
                         <div id="speed-display">183 kph</div>
                     </div>
-                    <img src="/static/img/steering_wheel.png" alt="Steering Wheel" id="steering-wheel" class="steering-wheel-icon">
+                    <img src="{{ url_for('serve_static', overlay_name='input_telemetry', filename='images/steering_wheel.png') }}" alt="Steering Wheel" id="steering-wheel" class="steering-wheel-icon">
                 </div>
             </div>
         </div>

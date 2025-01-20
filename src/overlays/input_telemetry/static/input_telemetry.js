@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function() {
-    var socket = io();
+    var socket = io('/input_telemetry');
 
     const canvas = document.getElementById("telemetry-graph");
     const ctx = canvas.getContext("2d");
@@ -10,7 +10,19 @@ document.addEventListener("DOMContentLoaded", function() {
     let brakeData = [];
     let clutchData = [];
 
+    socket.on('connect', function() {
+        console.log("Connected to telemetry namespace");
+    });
+
     socket.on('telemetry_update', function(data) {
+        updateTelemetryData(data);
+    });
+
+    socket.on('disconnect', function() {
+        console.log("Disconnected from telemetry namespace");
+    });
+
+    function updateTelemetryData(data) {
         let gearDisplay = data.gear === 0 ? "N" : data.gear === -1 ? "R" : data.gear;
         document.getElementById('gear-display').innerText = gearDisplay;
 
@@ -33,9 +45,7 @@ document.addEventListener("DOMContentLoaded", function() {
             brakeData.shift();
             clutchData.shift();
         }
-
-        drawGraph();
-    });
+    }
 
     function drawGraph() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -63,4 +73,11 @@ document.addEventListener("DOMContentLoaded", function() {
         });
         ctx.stroke();
     }
+
+    function animate() {
+        drawGraph();
+        requestAnimationFrame(animate);
+    }
+
+    requestAnimationFrame(animate);
 });
