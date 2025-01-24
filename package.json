@@ -1,0 +1,23 @@
+{
+  "name": "iracing-input-telemetry-overlay",
+  "version": "1.0.0",
+  "description": "**iRacing Input Telemetry Overlay** is an open-source Python-based project that provides real-time telemetry from iRacing, displaying input data through a web interface so you can put it on programs like OBS.",
+  "main": "index.js",
+  "scripts": {
+    "start": "electron src/main.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RaulArcos/iracing-input-telemetry-overlay.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/RaulArcos/iracing-input-telemetry-overlay/issues"
+  },
+  "homepage": "https://github.com/RaulArcos/iracing-input-telemetry-overlay#readme",
+  "devDependencies": {
+    "electron": "^34.0.1"
+  }
+}
