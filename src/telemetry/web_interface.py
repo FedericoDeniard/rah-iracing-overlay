@@ -73,7 +73,7 @@ class TelemetryWebInterface:
                     data = self.data_provider.get_telemetry_data()
                     if data:
                         self.socketio.emit('telemetry_update', data, namespace='/input_telemetry')
-                time.sleep(0.016) # 60fps of updates
+                time.sleep(0.016)
 
         thread = Thread(target=telemetry_thread)
         thread.daemon = True
