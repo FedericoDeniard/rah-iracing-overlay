@@ -3,7 +3,7 @@ eventlet.monkey_patch()
 
 from flask import Flask, render_template, send_from_directory
 from flask_socketio import SocketIO, Namespace
-from telemetry.data_provider import TelemetryDataProvider
+from data_provider import DataProvider
 import os
 import sys
 import time
@@ -25,7 +25,7 @@ class TelemetryNamespace(Namespace):
     def on_disconnect(self):
         print("Client disconnected from telemetry namespace")
 
-class TelemetryWebInterface:
+class WebInterface:
     """
     Manages the web interface for displaying telemetry overlays.
     """
@@ -34,7 +34,7 @@ class TelemetryWebInterface:
         template_folder = resource_path('overlays')
         self.app = Flask(__name__, template_folder=template_folder)
         self.socketio = SocketIO(self.app, async_mode='eventlet')
-        self.data_provider = TelemetryDataProvider()
+        self.data_provider = DataProvider()
         self._setup_routes()
         self._start_telemetry_thread()
         self.socketio.on_namespace(TelemetryNamespace('/input_telemetry'))
@@ -47,7 +47,6 @@ class TelemetryWebInterface:
         def serve_overlay(overlay_name):
             overlay_path = os.path.join(self.app.template_folder, overlay_name)
             html_file_path = os.path.join(overlay_path, f'{overlay_name}.html')
-            print(f"Looking for overlay at: {html_file_path}")  # Debug statement
             if os.path.exists(html_file_path):
                 return render_template(f'{overlay_name}/{overlay_name}.html')
             else:
@@ -79,7 +78,7 @@ class TelemetryWebInterface:
         thread.daemon = True
         thread.start()
 
-    def run(self, host='127.0.0.1', port=8080):
+    def run(self, host='127.0.0.1', port=8081):
         """
         Run the Flask application.
         """

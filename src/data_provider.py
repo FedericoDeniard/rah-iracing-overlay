@@ -1,6 +1,7 @@
 import irsdk
+import os
 
-class TelemetryDataProvider:
+class DataProvider:
     """
     Provides telemetry data from iRacing.
     Manages connection and data retrieval.
@@ -9,6 +10,8 @@ class TelemetryDataProvider:
     def __init__(self):
         self.ir_sdk = irsdk.IRSDK()
         self.is_connected = False
+        # Print the current working directory
+        print(f"DataProvider initialized. Current working directory: {os.getcwd()}")
 
     def connect(self):
         """

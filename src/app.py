@@ -1,4 +1,4 @@
-from telemetry.web_interface import TelemetryWebInterface
+from web_interface import WebInterface
 from overlay_window import OverlayWindow
 import sys
 import multiprocessing
@@ -9,11 +9,12 @@ def main():
     Initializes and runs the web interface.
     """
     try:
-        telemetry_interface = TelemetryWebInterface()
-        telemetry_interface.run()
+        web_interface = WebInterface()
+        web_interface.run()
+        print("Web interface running")
     except KeyboardInterrupt:
         print("Shutting down gracefully...")
-        telemetry_interface.data_provider.disconnect()
+        web_interface.data_provider.disconnect()
         sys.exit(0)
 
 if __name__ == '__main__':
