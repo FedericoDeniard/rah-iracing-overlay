@@ -30,7 +30,7 @@ def get_overlays():
         if os.path.isdir(overlay_path) and os.path.exists(properties_path):
             with open(properties_path, 'r') as properties_file:
                 properties = json.load(properties_file)
-                overlay_name = properties.get('name', name)  # Default to directory name if 'name' is not found
+                overlay_name = properties.get('name', name)
                 overlays.append({'name': overlay_name, 'url': f"http://127.0.0.1:8081/overlay/{name}"})
     return jsonify(overlays)
 
@@ -50,7 +50,7 @@ def launch_overlay():
                 properties = json.load(properties_file)
                 resolution = properties.get('resolution', {'width': 800, 'height': 600})
         else:
-            resolution = {'width': 800, 'height': 600}  # Default resolution
+            resolution = {'width': 800, 'height': 600} 
 
         process = multiprocessing.Process(target=launch_overlay_window, args=(overlay_url, resolution))
         process.start()
