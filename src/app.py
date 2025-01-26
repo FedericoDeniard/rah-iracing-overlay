@@ -6,12 +6,13 @@ import multiprocessing
 def main():
     """
     Main entry point for the iRacing Telemetry Overlay application.
-    Initializes and runs the web interface.
+    Initializes and runs the web interface with selected overlays.
     """
     try:
-        web_interface = WebInterface()
+        selected_overlays = ['input_telemetry']
+        web_interface = WebInterface(selected_overlays)
         web_interface.run()
-        print("Web interface running")
+        print("Web interface running with selected overlays:", selected_overlays)
     except KeyboardInterrupt:
         print("Shutting down gracefully...")
         web_interface.data_provider.disconnect()

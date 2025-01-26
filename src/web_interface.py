@@ -1,22 +1,14 @@
 import eventlet
 eventlet.monkey_patch()
 
-from flask import Flask, render_template, send_from_directory
+from flask import Flask, send_from_directory
 from flask_socketio import SocketIO, Namespace
 from data_provider import DataProvider
+from interface import interface_bp
+from overlays import overlays_bp
 import os
-import sys
 import time
 from threading import Thread
-
-
-def resource_path(relative_path):
-    """ Get the absolute path to the resource, works for dev and for PyInstaller """
-    try:
-        base_path = sys._MEIPASS
-    except AttributeError:
-        base_path = os.path.abspath(".")
-    return os.path.join(base_path, relative_path)
 
 class TelemetryNamespace(Namespace):
     def on_connect(self):
@@ -30,36 +22,25 @@ class WebInterface:
     Manages the web interface for displaying telemetry overlays.
     """
 
-    def __init__(self):
-        template_folder = resource_path('overlays')
-        self.app = Flask(__name__, template_folder=template_folder)
+    def __init__(self, selected_overlays=None):
+        self.selected_overlays = selected_overlays or []
+        self.app = Flask(__name__)
+        self.app.register_blueprint(interface_bp, url_prefix='/')
+        self.app.register_blueprint(overlays_bp, url_prefix='/overlay')
         self.socketio = SocketIO(self.app, async_mode='eventlet')
         self.data_provider = DataProvider()
         self._setup_routes()
         self._start_telemetry_thread()
-        self.socketio.on_namespace(TelemetryNamespace('/input_telemetry'))
+        for overlay in self.selected_overlays:
+            self.socketio.on_namespace(TelemetryNamespace(f'/{overlay}'))
 
     def _setup_routes(self):
         """
-        Set up Flask routes for serving overlays.
+        Set up additional routes for serving common static files.
         """
-        @self.app.route('/overlay/<overlay_name>')
-        def serve_overlay(overlay_name):
-            overlay_path = os.path.join(self.app.template_folder, overlay_name)
-            html_file_path = os.path.join(overlay_path, f'{overlay_name}.html')
-            if os.path.exists(html_file_path):
-                return render_template(f'{overlay_name}/{overlay_name}.html')
-            else:
-                return "Overlay not found", 404
-
-        @self.app.route('/overlay/<overlay_name>/static/<path:filename>')
-        def serve_static(overlay_name, filename):
-            static_folder = os.path.join(self.app.template_folder, overlay_name, 'static')
-            return send_from_directory(static_folder, filename)
-
         @self.app.route('/common/js/<path:filename>')
         def serve_common_js(filename):
-            common_js_folder = resource_path('common/js')
+            common_js_folder = os.path.join(os.path.dirname(__file__), 'common', 'js')
             return send_from_directory(common_js_folder, filename)
 
     def _start_telemetry_thread(self):

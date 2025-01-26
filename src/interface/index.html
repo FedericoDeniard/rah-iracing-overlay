@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Overlay Selector</title>
+    <link rel="stylesheet" href="{{ url_for('interface.serve_static', filename='style.css') }}">
+    <script src="{{ url_for('interface.serve_static', filename='main.js') }}"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Select Overlays</h1>
+        <form id="overlayForm">
+            <div class="overlay-option">
+                <input type="checkbox" id="overlay1" name="overlays" value="overlay1">
+                <label for="overlay1">Overlay 1</label>
+            </div>
+            <div class="overlay-option">
+                <input type="checkbox" id="overlay2" name="overlays" value="overlay2">
+                <label for="overlay2">Overlay 2</label>
+            </div>
+            <!-- Add more overlays as needed -->
+            <button type="submit">Launch Selected</button>
+        </form>
+    </div>
+</body>
+</html>
