@@ -1,6 +1,6 @@
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f9;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f0f2f5;
     color: #333;
     display: flex;
     justify-content: center;
@@ -10,17 +10,30 @@ body {
 }
 .container {
     background-color: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    width: 300px;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    width: 400px;
     text-align: center;
 }
 h1 {
     margin-bottom: 20px;
+    color: #007bff;
 }
 .overlay-option {
-    margin: 10px 0;
+    margin: 20px 0;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #fafafa;
+}
+.overlay-option h2 {
+    margin: 0 0 10px;
+    font-size: 18px;
+}
+.overlay-option p {
+    margin: 0 0 10px;
+    font-size: 14px;
 }
 button {
     background-color: #007bff;

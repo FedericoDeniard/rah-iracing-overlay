@@ -1,0 +1,7 @@
+{
+    "name": "input_telemetry",
+    "resolution":{
+        "width": 640,
+        "height": 180
+    }
+}
