@@ -1,6 +1,6 @@
 # **RAH iRacing Overlay**
 
-**iRacing Input Telemetry Overlay** is an open-source Python-based project that provides real-time telemetry from iRacing, displaying input data through a web interface so you can put it on programs like OBS.
+**iRacing Input Telemetry Overlay** is an open-source Python-based project that provides real-time telemetry from iRacing, displaying input data both through a web interface so you can put it on programs like OBS or screen overlay for using it on your game.
 
 I just didn't wanted to pay for some overlays subcriptions to have the overlay that I actually wanted, so why not trying? I hope you feel the same, this is free of course ;)
 
