@@ -29,6 +29,8 @@ datas = [
     ('templates/*.html', 'templates'),
 ]
 
+datas += collect_all_files('path/to/electron/app')
+
 block_cipher = None
 
 a = Analysis(
