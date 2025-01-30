@@ -17,6 +17,13 @@ class TelemetryNamespace(Namespace):
     def on_disconnect(self):
         print("Client disconnected from telemetry namespace")
 
+class LapPaceNamespace(Namespace):
+    def on_connect(self):
+        print("Client connected to lap pace namespace")
+
+    def on_disconnect(self):
+        print("Client disconnected from lap pace namespace")
+
 class WebInterface:
     """
     Manages the web interface for displaying telemetry overlays.
@@ -32,7 +39,10 @@ class WebInterface:
         self._setup_routes()
         self._start_telemetry_thread()
         for overlay in self.selected_overlays:
-            self.socketio.on_namespace(TelemetryNamespace(f'/{overlay}'))
+            if overlay == 'lap_pace':
+                self.socketio.on_namespace(LapPaceNamespace(f'/{overlay}'))
+            else:
+                self.socketio.on_namespace(TelemetryNamespace(f'/{overlay}'))
 
     def _setup_routes(self):
         """
@@ -53,6 +63,9 @@ class WebInterface:
                     data = self.data_provider.get_telemetry_data()
                     if data:
                         self.socketio.emit('telemetry_update', data, namespace='/input_telemetry')
+                    lap_times = self.data_provider.get_lap_times()
+                    if lap_times:
+                        self.socketio.emit('lap_time_update', {'lap_time': lap_times[-1]}, namespace='/lap_pace')
                 time.sleep(0.016)
 
         thread = Thread(target=telemetry_thread)

@@ -20,6 +20,10 @@ def index():
 def serve_static(filename):
     return send_from_directory(os.path.join(interface_bp.root_path, 'static'), filename)
 
+@interface_bp.route('/images/<filename>')
+def serve_images(filename):
+    return send_from_directory(os.path.join(interface_bp.root_path, 'static', 'images'), filename)
+
 @interface_bp.route('/get_overlays')
 def get_overlays():
     overlays_dir = os.path.join(os.path.dirname(__file__), '..', 'overlays')
@@ -30,8 +34,11 @@ def get_overlays():
         if os.path.isdir(overlay_path) and os.path.exists(properties_path):
             with open(properties_path, 'r') as properties_file:
                 properties = json.load(properties_file)
-                overlay_name = properties.get('name', name)
-                overlays.append({'name': overlay_name, 'url': f"http://127.0.0.1:8081/overlay/{name}"})
+                display_name = properties.get('display_name', name)
+                overlays.append({
+                    'display_name': display_name,
+                    'url': f"http://127.0.0.1:8081/overlay/{name}"
+                })
     return jsonify(overlays)
 
 @interface_bp.route('/launch', methods=['POST'])

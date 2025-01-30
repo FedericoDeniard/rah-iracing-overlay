@@ -1,5 +1,6 @@
 {
     "name": "input_telemetry",
+    "display_name": "Input Telemetry",
     "resolution":{
         "width": 640,
         "height": 180
