@@ -10,6 +10,7 @@ class DataProvider:
     def __init__(self):
         self.ir_sdk = irsdk.IRSDK()
         self.is_connected = False
+        self.lap_times = []  # Initialize lap_times here
         # Print the current working directory
         print(f"DataProvider initialized. Current working directory: {os.getcwd()}")
 
@@ -50,3 +51,19 @@ class DataProvider:
             return data
         print("Not connected to iRacing")
         return {} 
+    
+    def get_lap_times(self):
+        """
+        Retrieve the last 10 lap times from iRacing.
+        """
+        if self.is_connected:
+            current_lap = self.ir_sdk['Lap']
+            lap_time = self.ir_sdk['LapCurrentLapTime']
+            if current_lap > len(self.lap_times):
+                # New lap completed
+                self.lap_times.append(lap_time)
+                if len(self.lap_times) > 10:
+                    self.lap_times.pop(0)  # Keep only the last 10 lap times
+            return self.lap_times
+        print("Not connected to iRacing")
+        return []

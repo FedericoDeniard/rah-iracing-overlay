@@ -4,24 +4,49 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(overlays => {
             const overlayList = document.getElementById('overlayList');
             overlays.forEach(overlay => {
-                const overlayDiv = document.createElement('div');
-                overlayDiv.className = 'overlay-option';
-                overlayDiv.innerHTML = `
-                    <h2>${overlay.name}</h2>
-                    <p>URL: <a href="${overlay.url}" target="_blank">${overlay.url}</a></p>
-                    <button onclick="launchOverlay('${overlay.name}')">Open Overlay</button>
+                const displayName = overlay.display_name || 'Unknown';
+                const description = overlay.description || 'No description available.';
+
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'card'; 
+
+                const card2Div = document.createElement('div');
+                card2Div.className = 'card2';
+
+                card2Div.innerHTML = `
+                    <div class="overlay-info">
+                    <h4>${displayName}</h4>
+                    <p>${description}</p>
+                    </div>
+                    <div class="button-container">
+                        <button onclick="launchOverlay('${overlay.display_name}')" id="launch-${overlay.display_name}">
+                            <i class="fa-solid fa-arrow-up"></i> Overlay
+                        </button>
+                        <button onclick="window.open('${overlay.url}', '_blank')">
+                            <i class="fa-solid fa-globe"></i> URL
+                        </button>
+                    </div>
                 `;
-                overlayList.appendChild(overlayDiv);
+
+                cardDiv.appendChild(card2Div);
+                overlayList.appendChild(cardDiv);
             });
         });
 });
 
-function launchOverlay(overlayName) {
+function launchOverlay(displayName) {
     fetch('/launch', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ overlay: overlayName })
+        body: JSON.stringify({ overlay: displayName })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            document.getElementById(`launch-${displayName}`).disabled = true;
+            document.getElementById(`status-${displayName}`).textContent = 'Status: Opened';
+        }
     });
 } 

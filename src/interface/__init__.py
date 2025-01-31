@@ -3,6 +3,7 @@ import os
 import multiprocessing
 from overlay_window import OverlayWindow
 import json
+import logging
 
 interface_bp = Blueprint(
     'interface', __name__,
@@ -12,6 +13,9 @@ interface_bp = Blueprint(
 
 opened_overlays = {}
 
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
+
 @interface_bp.route('/')
 def index():
     return render_template('index.html')
@@ -19,6 +23,10 @@ def index():
 @interface_bp.route('/static/<filename>')
 def serve_static(filename):
     return send_from_directory(os.path.join(interface_bp.root_path, 'static'), filename)
+
+@interface_bp.route('/images/<filename>')
+def serve_images(filename):
+    return send_from_directory(os.path.join(interface_bp.root_path, 'static', 'images'), filename)
 
 @interface_bp.route('/get_overlays')
 def get_overlays():
@@ -30,32 +38,46 @@ def get_overlays():
         if os.path.isdir(overlay_path) and os.path.exists(properties_path):
             with open(properties_path, 'r') as properties_file:
                 properties = json.load(properties_file)
-                overlay_name = properties.get('name', name)
-                overlays.append({'name': overlay_name, 'url': f"http://127.0.0.1:8081/overlay/{name}"})
+                display_name = properties.get('display_name', name)
+                description = properties.get('description', 'No description available.')
+                overlays.append({
+                    'display_name': display_name,
+                    'folder_name': name,
+                    'description': description,
+                    'url': f"http://127.0.0.1:8081/overlay/{name}"
+                })
     return jsonify(overlays)
 
 @interface_bp.route('/launch', methods=['POST'])
 def launch_overlay():
     data = request.get_json()
     overlay_name = data.get('overlay')
-    if overlay_name:
-        if overlay_name in opened_overlays and opened_overlays[overlay_name].is_alive():
-            return jsonify({'status': 'success', 'message': f'Overlay {overlay_name} is already running.'}), 200
+    folder_name = next((overlay['folder_name'] for overlay in get_overlays().json if overlay['display_name'] == overlay_name), None)
+    
+    if folder_name:
+        logging.debug(f"Attempting to launch overlay: {folder_name}")
+        
+        if folder_name in opened_overlays and opened_overlays[folder_name].is_alive():
+            return jsonify({'status': 'success', 'message': f'Overlay {folder_name} is already running.'}), 200
 
-        overlay_url = f"http://127.0.0.1:8081/overlay/{overlay_name}"
-        properties_path = os.path.join(os.path.dirname(__file__), '..', 'overlays', overlay_name, 'properties.json')
+        overlay_url = f"http://127.0.0.1:8081/overlay/{folder_name}"
+        properties_path = os.path.join(os.path.dirname(__file__), '..', 'overlays', folder_name, 'properties.json')
+        
+        logging.debug(f"Properties path: {properties_path}")
         
         if os.path.exists(properties_path):
             with open(properties_path, 'r') as properties_file:
                 properties = json.load(properties_file)
                 resolution = properties.get('resolution', {'width': 800, 'height': 600})
+                logging.debug(f"Overlay properties: {properties}")
         else:
-            resolution = {'width': 800, 'height': 600} 
+            logging.error(f"Overlay properties file not found for {folder_name}")
+            return jsonify({'status': 'error', 'message': f'Overlay {folder_name} not found.'}), 404
 
         process = multiprocessing.Process(target=launch_overlay_window, args=(overlay_url, resolution))
         process.start()
-        opened_overlays[overlay_name] = process
-        return jsonify({'status': 'success', 'message': f'Overlay {overlay_name} launched.'}), 200
+        opened_overlays[folder_name] = process
+        return jsonify({'status': 'success', 'message': f'Overlay {folder_name} launched.'}), 200
     return jsonify({'status': 'error', 'message': 'Overlay name not provided.'}), 400
 
 def launch_overlay_window(url, resolution):

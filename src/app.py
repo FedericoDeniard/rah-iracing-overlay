@@ -17,7 +17,7 @@ def main():
     Initializes and runs the web interface with detected overlays.
     """
     try:
-        interface = OverlayWindow('http://127.0.0.1:8081/', width=1280, height=720, frameless=False)
+        interface = OverlayWindow('http://127.0.0.1:8081/', width=1000, height=700, frameless=False)
         overlay_process = multiprocessing.Process(target=interface.create_overlay_window)
         overlay_process.start()
         
