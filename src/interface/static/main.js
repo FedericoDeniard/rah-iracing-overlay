@@ -5,19 +5,31 @@ document.addEventListener('DOMContentLoaded', function() {
             const overlayList = document.getElementById('overlayList');
             overlays.forEach(overlay => {
                 const displayName = overlay.display_name || 'Unknown';
+                const description = overlay.description || 'No description available.';
 
-                const overlayDiv = document.createElement('div');
-                overlayDiv.className = 'col-lg-3 col-sm-6';
-                overlayDiv.innerHTML = `
-                    <div class="item">
-                        <img src="assets/images/overlay-placeholder.jpg" alt="${displayName}">
-                        <h4>${displayName}</h4>
-                        <button onclick="launchOverlay('${overlay.display_name}')" id="launch-${overlay.display_name}">Open Overlay</button>
-                        <button onclick="window.open('${overlay.url}', '_blank')">Open in Web</button>
-                        <span id="status-${overlay.display_name}">Status: Not Opened</span>
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'card'; 
+
+                const card2Div = document.createElement('div');
+                card2Div.className = 'card2';
+
+                card2Div.innerHTML = `
+                    <div class="overlay-info">
+                    <h4>${displayName}</h4>
+                    <p>${description}</p>
+                    </div>
+                    <div class="button-container">
+                        <button onclick="launchOverlay('${overlay.display_name}')" id="launch-${overlay.display_name}">
+                            <i class="fa-solid fa-arrow-up"></i> Overlay
+                        </button>
+                        <button onclick="window.open('${overlay.url}', '_blank')">
+                            <i class="fa-solid fa-globe"></i> URL
+                        </button>
                     </div>
                 `;
-                overlayList.appendChild(overlayDiv);
+
+                cardDiv.appendChild(card2Div);
+                overlayList.appendChild(cardDiv);
             });
         });
 });
