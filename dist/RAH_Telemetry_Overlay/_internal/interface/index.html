@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAH iRacing Overlay</title>
+    <link rel="stylesheet" href="{{ url_for('interface.serve_static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="{{ url_for('interface.serve_static', filename='main.js') }}" defer></script>
+    
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <h1>RAH iRacing Overlay</h1>
+        </header>
+        <main class="app-main">
+            <div class="most-popular">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="row" id="overlayList">
+                            <!-- Overlays will be dynamically loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        <footer class="app-footer">
+            <div class="social-icons">
+                <a href="https://github.com/RaulArcos" target="_blank">
+                    <img src="/images/github_logo.png" alt="GitHub">
+                    <span>RaulArcos</span>
+                </a>
+                <a href="https://www.linkedin.com/in/ra%C3%BAl-arcos-herrera-b11514175/" target="_blank">
+                    <img src="/images/linkedin_logo.png" alt="LinkedIn">
+                    <span>Raul Arcos Herrera</span>
+                </a>
+                <a href="paypal.me/raularcosherrera" target="_blank">
+                    <img src="/images/paypal_logo.png" alt="PayPal">
+                    <span>Coffee?</span>
+                </a>
+                <a href="https://www.twitch.tv/dizca" target="_blank">
+                    <img src="/images/twitch_logo.png" alt="Twitch">
+                    <span>Dizca</span>
+                </a>
+            </div>
+        </footer>
+    </div>
+</body>
+</html>
