@@ -7,6 +7,13 @@ class OverlayWindow:
         self.width = width
         self.height = height
         self.frameless = frameless
+        self.on_closed = None
+
+    def set_on_closed(self, callback):
+        """
+        Set the callback function to be called when the window is closed
+        """
+        self.on_closed = callback
 
     def create_overlay_window(self):
         self.window = webview.create_window(
@@ -20,4 +27,16 @@ class OverlayWindow:
             easy_drag=True, 
             draggable=True
         )
+        
+        # Register window closed event handler
+        if self.on_closed:
+            self.window.events.closed += self.on_closed_handler
+        
         webview.start()
+    
+    def on_closed_handler(self):
+        """
+        Handler called when the window is closed
+        """
+        if self.on_closed:
+            self.on_closed()

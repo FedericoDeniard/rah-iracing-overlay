@@ -4,6 +4,7 @@ import multiprocessing
 from overlay_window import OverlayWindow
 import json
 import logging
+import sys
 
 interface_bp = Blueprint(
     'interface', __name__,
@@ -11,6 +12,7 @@ interface_bp = Blueprint(
     static_folder=None
 )
 
+# Shared dictionary to track opened overlays across processes
 opened_overlays = {}
 
 # Configure logging
@@ -57,6 +59,11 @@ def launch_overlay():
     if folder_name:
         logging.debug(f"Attempting to launch overlay: {folder_name}")
         
+        # Clean up any terminated processes
+        for name in list(opened_overlays.keys()):
+            if not opened_overlays[name].is_alive():
+                del opened_overlays[name]
+                
         if folder_name in opened_overlays and opened_overlays[folder_name].is_alive():
             return jsonify({'status': 'success', 'message': f'Overlay {folder_name} is already running.'}), 200
 
@@ -73,16 +80,38 @@ def launch_overlay():
         else:
             logging.error(f"Overlay properties file not found for {folder_name}")
             return jsonify({'status': 'error', 'message': f'Overlay {folder_name} not found.'}), 404
-
-        process = multiprocessing.Process(target=launch_overlay_window, args=(overlay_url, resolution))
+        
+        # Create a shared flag for this overlay
+        exit_flag = multiprocessing.Value('i', 0)
+        
+        # Launch the overlay in a separate process
+        process = multiprocessing.Process(
+            target=launch_overlay_window, 
+            args=(overlay_url, resolution, exit_flag)
+        )
+        process.daemon = True  # Set as daemon so it exits when main process exits
         process.start()
         opened_overlays[folder_name] = process
+        
         return jsonify({'status': 'success', 'message': f'Overlay {folder_name} launched.'}), 200
     return jsonify({'status': 'error', 'message': 'Overlay name not provided.'}), 400
 
-def launch_overlay_window(url, resolution):
+def launch_overlay_window(url, resolution, exit_flag=None):
     """
     Launch the overlay window in a separate process with the specified resolution.
     """
-    overlay_window = OverlayWindow(url, width=resolution['width'], height=resolution['height'])
-    overlay_window.create_overlay_window()
+    try:
+        # Create the overlay window
+        overlay_window = OverlayWindow(url, width=resolution['width'], height=resolution['height'])
+        
+        # Set a callback for when the window is closed
+        def on_closed():
+            sys.exit(0)
+            
+        overlay_window.set_on_closed(on_closed)
+        
+        # Launch the window
+        overlay_window.create_overlay_window()
+    except Exception as e:
+        logging.error(f"Error launching overlay window: {e}")
+        sys.exit(1)

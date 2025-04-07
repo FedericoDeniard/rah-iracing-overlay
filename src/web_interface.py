@@ -8,7 +8,8 @@ from interface import interface_bp
 from overlays import overlays_bp
 import os
 import time
-from threading import Thread
+import threading
+import multiprocessing
 
 class TelemetryNamespace(Namespace):
     def on_connect(self):
@@ -37,6 +38,8 @@ class WebInterface:
         self.socketio = SocketIO(self.app, async_mode='eventlet')
         self.data_provider = DataProvider()
         self._setup_routes()
+        self.telemetry_thread = None
+        self.shutdown_flag = False
         self._start_telemetry_thread()
         for overlay in self.selected_overlays:
             if overlay == 'lap_pace':
@@ -58,7 +61,7 @@ class WebInterface:
         Start a background thread to emit telemetry data.
         """
         def telemetry_thread():
-            while True:
+            while not self.shutdown_flag:
                 if self.data_provider.is_connected:
                     data = self.data_provider.get_telemetry_data()
                     if data:
@@ -68,13 +71,39 @@ class WebInterface:
                         self.socketio.emit('lap_time_update', {'lap_time': lap_times[-1]}, namespace='/lap_pace')
                 time.sleep(0.016)
 
-        thread = Thread(target=telemetry_thread)
-        thread.daemon = True
-        thread.start()
+        self.telemetry_thread = threading.Thread(target=telemetry_thread)
+        self.telemetry_thread.daemon = True
+        self.telemetry_thread.start()
 
     def run(self, host='127.0.0.1', port=8081):
         """
         Run the Flask application.
         """
         self.data_provider.connect()
-        self.socketio.run(self.app, host=host, port=port) 
+        self.socketio.run(self.app, host=host, port=port)
+        
+    def shutdown(self):
+        """
+        Shutdown the web interface properly.
+        """
+        print("Shutting down web interface...")
+        
+        # Stop the telemetry thread
+        self.shutdown_flag = True
+        if self.telemetry_thread and self.telemetry_thread.is_alive():
+            try:
+                self.telemetry_thread.join(timeout=2)
+            except:
+                pass
+            
+        # Disconnect from iRacing
+        if self.data_provider:
+            self.data_provider.disconnect()
+            
+        # Stop the Socket.IO server
+        try:
+            self.socketio.stop()
+        except Exception as e:
+            print(f"Error stopping SocketIO: {e}")
+        
+        print("Web interface shutdown complete") 

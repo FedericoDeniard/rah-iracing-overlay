@@ -3,7 +3,7 @@
     "display_name": "Input Telemetry",
     "description": "Displays the input telemetry data like steering, throttle, brake, etc.",
     "resolution":{
-        "width": 640,
-        "height": 180
+        "width": 630,
+        "height": 150
     }
 }
