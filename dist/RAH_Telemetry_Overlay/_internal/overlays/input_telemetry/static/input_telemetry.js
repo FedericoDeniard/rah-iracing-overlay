@@ -23,22 +23,41 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 
     function updateTelemetryData(data) {
-        let gearDisplay = data.gear === 0 ? "N" : data.gear === -1 ? "R" : data.gear;
+        // Validate input data
+        if (!data || typeof data !== 'object') {
+            console.error('Invalid telemetry data received:', data);
+            return;
+        }
+        
+        // Process gear with validation
+        let gearValue = data.gear;
+        if (gearValue === null || gearValue === undefined) gearValue = 0;
+        let gearDisplay = gearValue === 0 ? "N" : gearValue === -1 ? "R" : gearValue;
         document.getElementById('gear-display').innerText = gearDisplay;
 
-        document.getElementById('speed-display').innerText = `${data.speed.toFixed(0)} kph`;
+        // Process speed with validation
+        let speedValue = parseFloat(data.speed);
+        if (isNaN(speedValue)) speedValue = 0;
+        document.getElementById('speed-display').innerText = `${speedValue.toFixed(0)} kph`;
 
-        document.getElementById('brake-fill').style.height = `${data.brake * 100}%`;
-        document.getElementById('throttle-fill').style.height = `${data.throttle * 100}%`;
-        document.getElementById('clutch-fill').style.height = `${data.clutch * 100}%`;
+        // Process pedal inputs with validation
+        const brakeValue = typeof data.brake === 'number' ? Math.max(0, Math.min(1, data.brake)) : 0;
+        const throttleValue = typeof data.throttle === 'number' ? Math.max(0, Math.min(1, data.throttle)) : 0;
+        const clutchValue = typeof data.clutch === 'number' ? Math.max(0, Math.min(1, data.clutch)) : 0;
 
-        let steeringAngleRadians = data.steering_wheel_angle;
+        document.getElementById('brake-fill').style.height = `${brakeValue * 100}%`;
+        document.getElementById('throttle-fill').style.height = `${throttleValue * 100}%`;
+        document.getElementById('clutch-fill').style.height = `${clutchValue * 100}%`;
+
+        // Process steering angle with validation
+        let steeringAngleRadians = typeof data.steering_wheel_angle === 'number' ? data.steering_wheel_angle : 0;
         let steeringAngleDegrees = -steeringAngleRadians * (180 / Math.PI);
         steeringWheelImage.style.transform = `rotate(${steeringAngleDegrees}deg)`;
 
-        throttleData.push(data.throttle * 100);
-        brakeData.push(data.brake * 100);
-        clutchData.push(data.clutch * 100);
+        // Update graph data with validation
+        throttleData.push(throttleValue * 100);
+        brakeData.push(brakeValue * 100);
+        clutchData.push(clutchValue * 100);
 
         if (throttleData.length > canvas.width) {
             throttleData.shift();

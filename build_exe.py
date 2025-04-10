@@ -14,7 +14,6 @@ def check_requirements():
         print("Installing PyInstaller...")
         subprocess.check_call([sys.executable, "-m", "pip", "install", "pyinstaller"])
     
-    # Check other dependencies
     required_packages = ["irsdk", "flask", "flask_socketio", "eventlet", "pywebview", "dnspython"]
     for package in required_packages:
         try:
@@ -26,11 +25,9 @@ def check_requirements():
 
 def build_exe():
     """Build the executable using PyInstaller"""
-    # Get the script directory
     script_dir = os.path.dirname(os.path.abspath(__file__))
     src_dir = os.path.join(script_dir, "src")
     
-    # Remove old build and dist directories if they exist
     for dir_name in ["build", "dist"]:
         path = os.path.join(script_dir, dir_name)
         if os.path.exists(path):
@@ -48,14 +45,10 @@ def build_exe():
                 print("3. Manually delete the directory before running this script again")
                 sys.exit(1)
     
-    # Get spec file path
     spec_file = os.path.join(src_dir, "RAH_Telemetry_Overlay.spec")
-    
-    # Build the executable
     print("Building executable...")
-    os.chdir(script_dir)  # Change to project root directory
+    os.chdir(script_dir)
     
-    # Use absolute paths for everything to avoid working directory issues
     dist_path = os.path.join(script_dir, "dist")
     work_path = os.path.join(script_dir, "build")
     
@@ -71,8 +64,6 @@ def build_exe():
     ])
     
     print("\n============ BUILD COMPLETED ============")
-    print("The executable should be in the 'dist/RAH_Telemetry_Overlay' directory.")
-    print("To run the application, double-click on 'RAH_Telemetry_Overlay.exe'")
 
 if __name__ == "__main__":
     print("========== Building RAH Telemetry Overlay ==========")

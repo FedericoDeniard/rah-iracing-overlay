@@ -2,26 +2,17 @@ import os
 import sys
 import platform
 
-# Flag to track if we're using the fallback threading mode
 using_fallback_mode = False
 
-# Windows-specific configuration for eventlet
 if platform.system() == 'Windows':
     os.environ['EVENTLET_NO_GREENDNS'] = 'yes'
-    # Remove specific hub selection to let eventlet auto-detect the best available hub
-    # os.environ['EVENTLET_HUB'] = 'poll'  
     
-    # For PyInstaller builds
     if getattr(sys, 'frozen', False):
-        # Force threading mode when inside PyInstaller bundle
         os.environ['EVENTLET_THREADPOOL_SIZE'] = '30'
 
-# Import eventlet with more error handling
 try:
     import eventlet
-    # Use a more cautious monkey patching approach
     if platform.system() == 'Windows':
-        # On Windows, be more selective with monkey patching
         eventlet.monkey_patch(os=False, thread=False, time=False)
     else:
         eventlet.monkey_patch()
@@ -36,13 +27,11 @@ except Exception as e:
         print("Falling back to pure threading mode")
     using_fallback_mode = True
 
-# Standard library imports
 from flask import Flask, send_from_directory
 import time
 import threading
 import multiprocessing
 
-# Conditional Flask-SocketIO imports
 if not using_fallback_mode:
     try:
         from flask_socketio import SocketIO, Namespace
@@ -50,7 +39,6 @@ if not using_fallback_mode:
         print("WARNING: Cannot import flask_socketio with eventlet support")
         using_fallback_mode = True
 
-# If we're using fallback mode, import with threading mode explicitly
 if using_fallback_mode:
     try:
         from flask_socketio import SocketIO, Namespace
@@ -59,7 +47,6 @@ if using_fallback_mode:
         print("Application cannot run without SocketIO support")
         sys.exit(1)
 
-# Application-specific imports
 from data_provider import DataProvider
 from interface import interface_bp
 from overlays import overlays_bp
@@ -67,7 +54,6 @@ from overlays import overlays_bp
 def resource_path(relative_path):
     """Get absolute path to resource, works for dev and for PyInstaller"""
     try:
-        # PyInstaller creates a temp folder and stores path in _MEIPASS
         base_path = sys._MEIPASS
     except Exception:
         base_path = os.path.abspath(os.path.dirname(__file__))
@@ -98,10 +84,8 @@ class WebInterface:
         self.app.register_blueprint(interface_bp, url_prefix='/')
         self.app.register_blueprint(overlays_bp, url_prefix='/overlay')
         
-        # SocketIO configuration
         socketio_kwargs = {}
         
-        # Always use threading mode if we're in fallback mode or on Windows executable
         if using_fallback_mode or (platform.system() == 'Windows' and getattr(sys, 'frozen', False)):
             socketio_kwargs = {
                 'async_mode': 'threading',
@@ -142,13 +126,37 @@ class WebInterface:
         """
         def telemetry_thread():
             while not self.shutdown_flag:
-                if self.data_provider.is_connected:
-                    data = self.data_provider.get_telemetry_data()
-                    if data:
-                        self.socketio.emit('telemetry_update', data, namespace='/input_telemetry')
-                    lap_times = self.data_provider.get_lap_times()
-                    if lap_times:
-                        self.socketio.emit('lap_time_update', {'lap_time': lap_times[-1]}, namespace='/lap_pace')
+                try:
+                    if self.data_provider.is_connected:
+                        try:
+                            data = self.data_provider.get_telemetry_data()
+                            if data:
+                                # Ensure all values are of correct type before emitting
+                                for key, value in data.items():
+                                    if key == 'gear':
+                                        data[key] = int(value) if value is not None else 0
+                                    elif value is None:
+                                        data[key] = 0.0
+                                    else:
+                                        try:
+                                            data[key] = float(value)
+                                        except (TypeError, ValueError):
+                                            data[key] = 0.0
+                                
+                                self.socketio.emit('telemetry_update', data, namespace='/input_telemetry')
+                                
+                            try:
+                                lap_times = self.data_provider.get_lap_times()
+                                if lap_times and len(lap_times) > 0:
+                                    self.socketio.emit('lap_time_update', {'lap_time': lap_times[-1]}, namespace='/lap_pace')
+                            except Exception as e:
+                                print(f"Error getting lap times: {e}")
+                        except Exception as e:
+                            print(f"Error in telemetry processing: {e}")
+                except Exception as e:
+                    print(f"Unexpected error in telemetry thread: {e}")
+                    
+                # Use a small sleep time to reduce CPU usage
                 time.sleep(0.016)
 
         self.telemetry_thread = threading.Thread(target=telemetry_thread)
@@ -161,14 +169,12 @@ class WebInterface:
         """
         self.data_provider.connect()
         
-        # Always use basic parameters for threading mode
         if using_fallback_mode or (platform.system() == 'Windows' and getattr(sys, 'frozen', False)):
             try:
                 print("Starting SocketIO server with threading mode...")
                 self.socketio.run(self.app, host=host, port=port, debug=False, use_reloader=False)
             except TypeError as e:
                 print(f"Error with SocketIO run parameters: {e}")
-                # Fall back if the above fails
                 try:
                     self.socketio.run(self.app, host=host, port=port)
                 except Exception as e:
@@ -178,12 +184,10 @@ class WebInterface:
                 print(f"Error starting SocketIO server: {e}")
                 sys.exit(1)
         else:
-            # For development with eventlet
             try:
                 self.socketio.run(self.app, host=host, port=port)
             except Exception as e:
                 print(f"Error in eventlet mode, falling back to threading: {e}")
-                # Fall back to threading mode
                 self.socketio = SocketIO(self.app, async_mode='threading')
                 self.socketio.run(self.app, host=host, port=port, debug=False, use_reloader=False)
         
@@ -193,7 +197,6 @@ class WebInterface:
         """
         print("Shutting down web interface...")
         
-        # Stop the telemetry thread
         self.shutdown_flag = True
         if self.telemetry_thread and self.telemetry_thread.is_alive():
             try:
@@ -201,11 +204,9 @@ class WebInterface:
             except:
                 pass
             
-        # Disconnect from iRacing
         if self.data_provider:
             self.data_provider.disconnect()
             
-        # Stop the Socket.IO server
         try:
             self.socketio.stop()
         except Exception as e:

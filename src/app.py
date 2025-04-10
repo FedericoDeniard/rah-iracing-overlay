@@ -19,7 +19,6 @@ import importlib
 import subprocess
 import threading
 
-# Global variables to track processes
 overlay_processes = []
 web_interface_process = None
 exit_flag = multiprocessing.Value('i', 0)  # Shared flag to signal program exit
@@ -27,7 +26,6 @@ exit_flag = multiprocessing.Value('i', 0)  # Shared flag to signal program exit
 def resource_path(relative_path):
     """Get absolute path to resource, works for dev and for PyInstaller"""
     try:
-        # PyInstaller creates a temp folder and stores path in _MEIPASS
         base_path = sys._MEIPASS
     except Exception:
         base_path = os.path.abspath(os.path.dirname(__file__))
@@ -46,12 +44,10 @@ def cleanup():
     """
     print("Cleaning up resources...")
     
-    # Import the interface module to access the opened_overlays dictionary
     try:
         from interface import opened_overlays
         print(f"Found {len(opened_overlays)} active overlay windows to close")
         
-        # Terminate all opened overlay processes
         for overlay_name, process in opened_overlays.items():
             try:
                 if process and process.is_alive():
@@ -63,13 +59,11 @@ def cleanup():
     except Exception as e:
         print(f"Error accessing opened overlays: {e}")
     
-    # Terminate all overlay processes we started directly
     for process in overlay_processes:
         if process.is_alive():
             process.terminate()
             process.join(timeout=1)
     
-    # Terminate web interface process
     if web_interface_process and web_interface_process.is_alive():
         web_interface_process.terminate()
         web_interface_process.join(timeout=1)
@@ -89,7 +83,6 @@ def create_main_window_thread(exit_flag):
     try:
         interface = OverlayWindow('http://127.0.0.1:8081/', width=1000, height=700, frameless=False)
         
-        # Override window close handler
         def on_window_closed():
             exit_flag.value = 1
             
@@ -106,7 +99,6 @@ def create_main_window(exit_flag):
     try:
         interface = OverlayWindow('http://127.0.0.1:8081/', width=1000, height=700, frameless=False)
         
-        # Override window close handler
         def on_window_closed():
             exit_flag.value = 1
             
@@ -132,25 +124,18 @@ def run_unified_app(selected_overlays):
     This is used when we're in fallback mode to ensure pywebview runs in the main thread
     """
     try:
-        # First start the web interface (but don't block)
         web_interface = WebInterface(selected_overlays)
         
-        # Start the web interface in a separate thread
         web_thread = threading.Thread(target=lambda: web_interface.run())
         web_thread.daemon = True
         web_thread.start()
         
-        # Allow web server to initialize
         time.sleep(1)
         
-        # Create the main window in the main thread
         print("Creating main window in main thread...")
         interface = OverlayWindow('http://127.0.0.1:8081/', width=1000, height=700, frameless=False)
         
-        # No need for on_closed handler since this is the main thread
         interface.create_overlay_window()
-        
-        # If we reach here, the window was closed
         print("Main window closed, shutting down...")
         
     except Exception as e:
@@ -163,39 +148,29 @@ def main():
     """
     global overlay_processes, web_interface_process
     
-    # Register the cleanup function to be called on normal exit
     atexit.register(cleanup)
     
-    # Register signal handlers for graceful termination
-    signal.signal(signal.SIGINT, signal_handler)  # Ctrl+C
-    signal.signal(signal.SIGTERM, signal_handler)  # Termination request
+    signal.signal(signal.SIGINT, signal_handler)  
+    signal.signal(signal.SIGTERM, signal_handler) 
     
     try:
-        # Detect overlays
         selected_overlays = detect_overlays()
-        
-        # Check if we are in fallback mode or frozen on Windows
         frozen_on_windows = platform.system() == 'Windows' and getattr(sys, 'frozen', False)
         
-        # When using fallback mode, run everything in the main thread
         if using_fallback_mode or frozen_on_windows:
             print("Running in unified mode - web interface and window in same process")
             run_unified_app(selected_overlays)
-            # If we get here, the application has been closed
             cleanup()
             return
             
-        # Use standard multiprocessing approach
         web_interface_process = multiprocessing.Process(
             target=run_web_interface,
             args=(selected_overlays,)
         )
         web_interface_process.start()
         
-        # Allow web server to initialize
         time.sleep(0.5)
         
-        # On Windows with frozen app, use a thread for main window to avoid pipe issues
         if frozen_on_windows:
             import threading
             main_window_thread = threading.Thread(
@@ -205,7 +180,6 @@ def main():
             main_window_thread.daemon = True
             main_window_thread.start()
             
-            # Wait for exit flag
             while True:
                 if exit_flag.value == 1:
                     print("Main window closed, initiating shutdown...")
@@ -213,7 +187,6 @@ def main():
                     break
                 time.sleep(0.1)
         else:
-            # Create the main interface window as a process (normal approach)
             overlay_process = multiprocessing.Process(
                 target=create_main_window,
                 args=(exit_flag,)
@@ -221,7 +194,6 @@ def main():
             overlay_process.start()
             overlay_processes.append(overlay_process)
             
-            # Main loop - check for exit flag
             while True:
                 if exit_flag.value == 1:
                     print("Main window closed, initiating shutdown...")
@@ -237,5 +209,5 @@ def main():
         sys.exit(0)
 
 if __name__ == '__main__':
-    multiprocessing.freeze_support()  # Needed for PyInstaller
+    multiprocessing.freeze_support()
     main()

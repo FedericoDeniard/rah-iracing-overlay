@@ -6,23 +6,13 @@
     <link rel="stylesheet" href="{{ url_for('overlays.serve_static', overlay_name='input_telemetry', filename='input_telemetry.css') }}">
     <script src="{{ url_for('overlays.serve_static', overlay_name='input_telemetry', filename='input_telemetry.js') }}"></script>
     <script src="{{ url_for('serve_common_js', filename='socket.io.min.js') }}"></script>
-    <style>
-        html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0); /* Fully transparent */
-            overflow: hidden;
-        }
-    </style>
 </head>
 <body>
     <div class="telemetry-container pywebview-drag-region">
-        <div class="telemetry-content pywebview-drag-region">
+        <div class="telemetry-content">
             <canvas id="telemetry-graph" width="300" height="100"></canvas>
     
-            <div class="telemetry-bars pywebview-drag-region">
+            <div class="telemetry-bars">
                 <div id="clutch-bar" class="bar">
                     <div class="bar-fill" id="clutch-fill"></div>
                 </div>
@@ -34,7 +24,7 @@
                 </div>
             </div>
     
-            <div class="telemetry-right pywebview-drag-region">
+            <div class="telemetry-right">
                 <div class="gear-steering-container">
                     <div class="gear-speed-container">
                         <div id="gear-display">4</div>

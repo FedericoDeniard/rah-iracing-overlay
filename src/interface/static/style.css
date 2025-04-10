@@ -33,7 +33,6 @@ html, body {
 .app-header h1 {
     margin: 0;
     padding-left: 20px;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 .app-main {
@@ -71,7 +70,6 @@ html, body {
     align-items: center;
     color: #EFEFEF;
     text-align: center;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .card2 {
@@ -93,29 +91,63 @@ html, body {
 .button-container {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 4px;
     justify-content: center;
     padding: 10px;
+}
+
+.secondary-buttons {
+    display: flex;
+    gap: 5px;
+    justify-content: center;
 }
 
 button {
     background-color: #ED2727;
     color: #EFEFEF;
     border: none;
-    padding: 10px 20px;
+    padding: 10px 15px;
     border-radius: 5px;
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: all 0.2s;
     font-family: 'Roboto', sans-serif;
+    font-size: 0.9em;
+}
+
+.main-button {
+    width: 100%;
+}
+
+.small-button {
+    padding: 8px;
+    width: 30px;
+    height: 30px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.url-button {
+    width: 100%;
+    background-color: #333;
 }
 
 button:hover {
     background-color: #1D1D1D;
+    transform: translateY(-2px);
+    /* box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); */
+}
+
+.small-button:hover {
+    transform: translateY(-1px);
 }
 
 button:disabled {
     background-color: #555;
     cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
 }
 
 .app-footer {
@@ -139,7 +171,7 @@ button:disabled {
     transition: color 0.3s;
 }
 
-social-icons a:hover {
+.social-icons a:hover {
     color: #ED2727;
 }
 
@@ -163,6 +195,74 @@ social-icons a:hover {
 .overlay-info p {
     font-size: 0.9em;
     margin: 5px 0 0 0;
-    max-height: 60px;
+    max-height: 40px;
     overflow-y: auto;
+}
+
+.overlay-info small {
+    display: block;
+    font-size: 0.8em;
+    color: #AAA;
+    margin-top: 5px;
+}
+
+/* Toast Notification */
+.toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background-color: rgba(29, 29, 29, 0.9);
+    color: #EFEFEF;
+    padding: 12px 24px;
+    border-radius: 4px;
+    /* box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); */
+    z-index: 1000;
+    transition: transform 0.3s ease;
+    font-size: 14px;
+}
+
+.toast.error {
+    background-color: rgba(220, 53, 69, 0.9);
+}
+
+.toast.show {
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Floating Save Button */
+.floating-save-button {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    background-color: rgba(29, 29, 29, 0.8);
+    padding: 10px;
+    border-radius: 8px;
+    /* box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); */
+    animation: bounce 1s infinite alternate;
+}
+
+.floating-save-button button {
+    background-color: #2ecc71;
+    padding: 12px 20px;
+    font-size: 1em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: auto;
+}
+
+.floating-save-button button:hover {
+    background-color: #27ae60;
+    transform: scale(1.05);
+}
+
+@keyframes bounce {
+    from {
+        transform: translateY(0);
+    }
+    to {
+        transform: translateY(-5px);
+    }
 }

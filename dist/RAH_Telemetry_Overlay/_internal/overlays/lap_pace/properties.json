@@ -4,5 +4,12 @@
     "resolution": {
         "width": 640,
         "height": 180
+    },
+    "position": {
+        "x": 1931,
+        "y": 228
+    },
+    "dpi_info": {
+        "scale": 1
     }
-} 
+}
