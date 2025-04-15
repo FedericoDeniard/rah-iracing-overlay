@@ -14,12 +14,9 @@ interface_bp = Blueprint(
     static_folder=None
 )
 
-# Shared dictionary to track opened overlays across processes
 opened_overlays = {}
-# Dictionary to track overlay windows across the app
 overlay_windows = {}
 
-# Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
 @interface_bp.route('/')
@@ -49,18 +46,14 @@ def get_overlays():
                 position = properties.get('position', None)
                 dpi_info = properties.get('dpi_info', {'scale': 1.0})
                 
-                # Look for preview GIFs in the overlay's static/images folder
                 preview_gif = properties.get('preview_gif', None)
                 if not preview_gif:
-                    # Check static/images folder for preview.gif (correct path)
                     images_folder = os.path.join(overlay_path, 'static', 'images')
                     if os.path.exists(images_folder):
                         preview_file = os.path.join(images_folder, 'preview.gif')
                         if os.path.exists(preview_file):
-                            # Use relative URL for the frontend
                             preview_gif = f"/overlay/{name}/static/images/preview.gif"
                     
-                    # Fallback to static folder if not found
                     if not preview_gif:
                         static_folder = os.path.join(overlay_path, 'static')
                         if os.path.exists(static_folder):
@@ -83,21 +76,18 @@ def get_overlays():
 def launch_overlay():
     data = request.get_json()
     overlay_name = data.get('overlay')
-    is_transparent = data.get('transparent', True)  # Default to transparent mode
+    is_transparent = data.get('transparent', True) 
     
     folder_name = next((overlay['folder_name'] for overlay in get_overlays().json if overlay['display_name'] == overlay_name), None)
     
     if folder_name:
         logging.debug(f"Attempting to launch overlay: {folder_name}")
         
-        # Close existing overlay if it's open
         if folder_name in opened_overlays and opened_overlays[folder_name] is not None and opened_overlays[folder_name].is_alive():
             logging.debug(f"Closing existing overlay: {folder_name}")
             opened_overlays[folder_name].terminate()
             opened_overlays[folder_name].join(timeout=1)
-            # Remove from opened_overlays
             del opened_overlays[folder_name]
-            # Wait a moment to ensure the window is closed
             time.sleep(0.5)
         
         overlay_url = f"http://127.0.0.1:8081/overlay/{folder_name}"
@@ -115,18 +105,15 @@ def launch_overlay():
             logging.error(f"Overlay properties file not found for {folder_name}")
             return jsonify({'status': 'error', 'message': f'Overlay {folder_name} not found.'}), 404
         
-        # Create a shared flag for this overlay
         exit_flag = multiprocessing.Value('i', 0)
         
-        # Launch the overlay in a separate process
         process = multiprocessing.Process(
             target=launch_overlay_window, 
             args=(overlay_url, resolution, exit_flag, is_transparent, position, folder_name)
         )
-        process.daemon = True  # Set as daemon so it exits when main process exits
+        process.daemon = True  
         process.start()
         
-        # Store process reference
         opened_overlays[folder_name] = process
         
         return jsonify({
@@ -144,7 +131,6 @@ def toggle_transparency():
     folder_name = next((overlay['folder_name'] for overlay in get_overlays().json if overlay['display_name'] == overlay_name), None)
     
     if folder_name:
-        # Get current saved position from properties.json
         properties_path = os.path.join(os.path.dirname(__file__), '..', 'overlays', folder_name, 'properties.json')
         position = None
         
@@ -153,15 +139,11 @@ def toggle_transparency():
                 properties = json.load(properties_file)
                 position = properties.get('position', None)
         
-        # Close existing overlay if it's open
         if folder_name in opened_overlays and opened_overlays[folder_name] is not None and opened_overlays[folder_name].is_alive():
-            # Close the existing overlay
             opened_overlays[folder_name].terminate()
             opened_overlays[folder_name].join(timeout=1)
-            # Small delay to ensure window closes
             time.sleep(0.5)
         
-        # Launch with non-transparent mode
         return launch_overlay_with_transparency(folder_name, False)
     
     return jsonify({'status': 'error', 'message': 'Overlay not found.'}), 404
@@ -175,19 +157,14 @@ def toggle_to_transparent():
     folder_name = next((overlay['folder_name'] for overlay in get_overlays().json if overlay['display_name'] == overlay_name), None)
     
     if folder_name:
-        # Save position first
         if position:
             save_overlay_position(folder_name, position['x'], position['y'])
         
-        # Close existing overlay and launch transparent one
         if folder_name in opened_overlays and opened_overlays[folder_name] is not None and opened_overlays[folder_name].is_alive():
-            # Close the existing overlay
             opened_overlays[folder_name].terminate()
             opened_overlays[folder_name].join(timeout=1)
-            # Small delay to ensure window closes
             time.sleep(0.5)
         
-        # Launch with transparent=True
         return launch_overlay_with_transparency(folder_name, True)
     
     return jsonify({'status': 'error', 'message': 'Overlay not found.'}), 404
@@ -200,51 +177,40 @@ def report_window_position():
     data = request.get_json()
     folder_name = data.get('folder_name')
     position = data.get('position')
-    dpi_scale = data.get('dpi_scale', 1.0)  # Get DPI scaling factor from client
+    dpi_scale = data.get('dpi_scale', 1.0) 
     
     if not folder_name or not position:
         return jsonify({'status': 'error', 'message': 'Missing required data'}), 400
     
-    # Make sure position values are integers
     position['x'] = int(position['x'])
     position['y'] = int(position['y'])
     
-    # Ensure position is on screen (prevent negative values)
     if position['x'] < 0:
         position['x'] = 0
     if position['y'] < 0:
         position['y'] = 0
     
-    # Log the exact position and DPI scale being used
     logging.info(f"Saving position for {folder_name}: x={position['x']}, y={position['y']} with DPI scale: {dpi_scale}")
     
-    # Save the dpi_scale along with the position
     properties_path = os.path.join(os.path.dirname(__file__), '..', 'overlays', folder_name, 'properties.json')
     
     if os.path.exists(properties_path):
         with open(properties_path, 'r') as properties_file:
             properties = json.load(properties_file)
             
-        # Save DPI info with position
         properties['position'] = {'x': position['x'], 'y': position['y']}
         properties['dpi_info'] = {'scale': dpi_scale}
             
-        # Write back to file
         with open(properties_path, 'w') as properties_file:
             json.dump(properties, properties_file, indent=4)
     
-    # Save the position
     if save_overlay_position(folder_name, position['x'], position['y']):
-        # Close the existing overlay
         if folder_name in opened_overlays and opened_overlays[folder_name] is not None and opened_overlays[folder_name].is_alive():
             try:
-                # Close the non-transparent overlay 
                 opened_overlays[folder_name].terminate()
                 opened_overlays[folder_name].join(timeout=1)
-                # Small delay to ensure window closes
                 time.sleep(0.5)
                 
-                # Launch transparent overlay at saved position
                 return launch_overlay_with_transparency(folder_name, True)
             except Exception as e:
                 logging.error(f"Error toggling overlay: {e}")
@@ -272,10 +238,8 @@ def launch_overlay_with_transparency(folder_name, is_transparent):
     else:
         return jsonify({'status': 'error', 'message': f'Overlay {folder_name} properties not found.'}), 404
     
-    # Create a shared flag for this overlay
     exit_flag = multiprocessing.Value('i', 0)
     
-    # Launch the overlay in a separate process
     process = multiprocessing.Process(
         target=launch_overlay_window, 
         args=(overlay_url, resolution, exit_flag, is_transparent, position, folder_name)
@@ -283,7 +247,6 @@ def launch_overlay_with_transparency(folder_name, is_transparent):
     process.daemon = True
     process.start()
     
-    # Store process reference
     opened_overlays[folder_name] = process
     
     return jsonify({
@@ -300,11 +263,9 @@ def save_position():
     folder_name = next((overlay['folder_name'] for overlay in get_overlays().json if overlay['display_name'] == overlay_name), None)
     
     if folder_name:
-        # Get latest window position from client side
         position = data.get('position')
         
         if position:
-            # Save position to properties.json
             save_overlay_position(folder_name, position['x'], position['y'])
             
             return jsonify({
@@ -350,7 +311,6 @@ def close_overlay():
     folder_name = data.get('folder_name')
     
     if not folder_name:
-        # If folder_name not provided directly, try to get it from display_name
         folder_name = next((overlay['folder_name'] for overlay in get_overlays().json 
                             if overlay['display_name'] == overlay_name), None)
     
@@ -362,14 +322,12 @@ def close_overlay():
                 logging.debug(f"Terminating overlay process: {folder_name}")
                 opened_overlays[folder_name].terminate()
                 opened_overlays[folder_name].join(timeout=1)
-                # Remove from opened_overlays completely instead of setting to None
                 del opened_overlays[folder_name]
                 return jsonify({'status': 'success', 'message': f'Overlay {overlay_name} closed successfully'}), 200
             except Exception as e:
                 logging.error(f"Error closing overlay: {e}")
                 return jsonify({'status': 'error', 'message': str(e)}), 500
         else:
-            # If process is not found or not alive, consider it already closed
             logging.debug(f"Overlay {folder_name} is not running or already closed")
             return jsonify({'status': 'success', 'message': f'Overlay {overlay_name} is already closed'}), 200
     
@@ -384,7 +342,6 @@ def get_active_overlays():
     
     for folder_name, process in opened_overlays.items():
         if process is not None and process.is_alive():
-            # Find the display name for this folder
             display_name = None
             for overlay in get_overlays().json:
                 if overlay['folder_name'] == folder_name:
@@ -407,7 +364,6 @@ def launch_overlay_window(url, resolution, exit_flag=None, transparent=True, pos
     Launch the overlay window in a separate process with the specified resolution.
     """
     try:
-        # Create the overlay window object
         overlay_window = OverlayWindow(
             url, 
             width=resolution['width'], 
@@ -416,11 +372,9 @@ def launch_overlay_window(url, resolution, exit_flag=None, transparent=True, pos
             on_top=True
         )
         
-        # Set folder name for position reporting first (needed for DPI info)
         if folder_name:
             overlay_window.set_folder_name(folder_name)
             
-        # Now set position if available (will be properly adjusted for DPI)
         if position:
             logging.info(f"Setting position for {folder_name}: {position}")
             overlay_window.position = position
