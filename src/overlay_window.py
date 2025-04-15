@@ -57,7 +57,7 @@ class OverlayWindow:
     for telemetry overlays.
     """
     
-    def __init__(self, url, width, height, frameless=True, transparent=False):
+    def __init__(self, url, width, height, frameless=True, transparent=False, on_top=False):
         """Initialize the overlay window.
         
         Args:
@@ -73,6 +73,7 @@ class OverlayWindow:
         self.height = height
         self.frameless = frameless
         self.transparent = transparent
+        self.on_top = on_top
         self.on_closed = None
         self.position = None
         self.folder_name = None  
@@ -119,7 +120,7 @@ class OverlayWindow:
                 self.window.events.loaded += self.inject_scripts
                 self._start_position_tracking()
             
-            webview.start(gui='edgechromium', debug=True)
+            webview.start(gui='edgechromium', debug=False)
         except Exception as e:
             logging.error(f"Error creating overlay window: {e}")
     
@@ -155,7 +156,7 @@ class OverlayWindow:
             "height": self.height,
             "frameless": self.frameless,
             "transparent": self.transparent,
-            "on_top": True,
+            "on_top": self.on_top,
             "easy_drag": True,
             "min_size": (200, 100),
             "background_color": "#000000",

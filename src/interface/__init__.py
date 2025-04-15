@@ -412,7 +412,8 @@ def launch_overlay_window(url, resolution, exit_flag=None, transparent=True, pos
             url, 
             width=resolution['width'], 
             height=resolution['height'], 
-            transparent=transparent
+            transparent=transparent,
+            on_top=True
         )
         
         # Set folder name for position reporting first (needed for DPI info)
