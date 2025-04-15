@@ -15,11 +15,21 @@
             <h1>RAH iRacing Overlay</h1>
         </header>
         <main class="app-main">
-            <div class="most-popular">
-                <div class="row">
-                    <div class="col-lg-12">
-                        <div class="row" id="overlayList">
-                            <!-- Overlays will be dynamically loaded here -->
+            <div class="content-container">
+                <div class="overlay-list-container">
+                    <div id="overlayList"></div>
+                </div>
+                <div class="overlay-preview-container">
+                    <div id="previewContent">
+                        <div class="preview-placeholder">
+                            <p>Select an overlay to see its preview</p>
+                        </div>
+                        <div class="preview-content" style="display: none;">
+                            <h3 id="previewTitle">Overlay Name</h3>
+                            <div class="preview-description" id="previewDescription">Description will appear here.</div>
+                            <div class="preview-image">
+                                <img id="previewGif" src="" alt="Overlay Preview">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -35,7 +45,7 @@
                     <img src="/images/linkedin_logo.png" alt="LinkedIn">
                     <span>Raul Arcos Herrera</span>
                 </a>
-                <a href="paypal.me/raularcosherrera" target="_blank">
+                <a href="https://www.paypal.me/raularcosherrera" target="_blank">
                     <img src="/images/paypal_logo.png" alt="PayPal">
                     <span>Coffee?</span>
                 </a>

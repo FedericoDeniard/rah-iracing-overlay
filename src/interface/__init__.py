@@ -65,7 +65,7 @@ def get_overlays():
                     'display_name': display_name,
                     'folder_name': name,
                     'description': description,
-                    'url': f"http://127.0.0.1:8081/overlay/{name}",
+                    'url': f"http://127.0.0.1:8085/overlay/{name}",
                     'position': position,
                     'dpi_info': dpi_info,
                     'preview_gif': preview_gif
@@ -90,7 +90,7 @@ def launch_overlay():
             del opened_overlays[folder_name]
             time.sleep(0.5)
         
-        overlay_url = f"http://127.0.0.1:8081/overlay/{folder_name}"
+        overlay_url = f"http://127.0.0.1:8085/overlay/{folder_name}"
         properties_path = os.path.join(os.path.dirname(__file__), '..', 'overlays', folder_name, 'properties.json')
         
         logging.debug(f"Properties path: {properties_path}")
@@ -227,7 +227,7 @@ def report_window_position():
 
 def launch_overlay_with_transparency(folder_name, is_transparent):
     """Helper function to launch overlay with specified transparency"""
-    overlay_url = f"http://127.0.0.1:8081/overlay/{folder_name}"
+    overlay_url = f"http://127.0.0.1:8085/overlay/{folder_name}"
     properties_path = os.path.join(os.path.dirname(__file__), '..', 'overlays', folder_name, 'properties.json')
     
     if os.path.exists(properties_path):

@@ -219,7 +219,7 @@ class WebInterface:
         except Exception as e:
             logging.error(f"Error getting lap times: {e}")
 
-    def run(self, host: str = '127.0.0.1', port: int = 8081) -> None:
+    def run(self, host: str = '127.0.0.1', port: int = 8085) -> None:
         """
         Run the Flask application.
         

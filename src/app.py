@@ -81,7 +81,7 @@ def signal_handler(sig, frame):
 def create_main_window_thread(exit_flag):
     """Create the main window in a thread instead of a process on Windows"""
     try:
-        interface = OverlayWindow('http://127.0.0.1:8081/', width=1000, height=700, frameless=False)
+        interface = OverlayWindow('http://127.0.0.1:8085/', width=1000, height=700, frameless=False)
         
         def on_window_closed():
             exit_flag.value = 1
@@ -97,7 +97,7 @@ def create_main_window(exit_flag):
     Create the main window in a separate process
     """
     try:
-        interface = OverlayWindow('http://127.0.0.1:8081/', width=1000, height=700, frameless=False)
+        interface = OverlayWindow('http://127.0.0.1:8085/', width=1000, height=700, frameless=False)
         
         def on_window_closed():
             exit_flag.value = 1
@@ -133,7 +133,7 @@ def run_unified_app(selected_overlays):
         time.sleep(1)
         
         print("Creating main window in main thread...")
-        interface = OverlayWindow('http://127.0.0.1:8081/', width=1000, height=700, frameless=False)
+        interface = OverlayWindow('http://127.0.0.1:8085/', width=1000, height=700, frameless=False)
         
         interface.create_overlay_window()
         print("Main window closed, shutting down...")

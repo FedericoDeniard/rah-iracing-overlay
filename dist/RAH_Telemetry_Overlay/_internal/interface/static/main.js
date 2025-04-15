@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const hasPosition = overlay.position != null;
                 const folderName = overlay.folder_name;
                 const dpiInfo = overlay.dpi_info || {scale: 1.0};
+                const previewGif = overlay.preview_gif || '/images/default-preview.gif';
 
                 // Store the overlay properties in localStorage for later use
                 if (overlay.position) {
@@ -18,6 +19,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 const cardDiv = document.createElement('div');
                 cardDiv.className = 'card'; 
+                cardDiv.setAttribute('data-folder', folderName);
+                cardDiv.setAttribute('data-name', displayName);
+                cardDiv.setAttribute('data-description', description);
+                cardDiv.setAttribute('data-preview', previewGif);
 
                 const card2Div = document.createElement('div');
                 card2Div.className = 'card2';
@@ -25,7 +30,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 card2Div.innerHTML = `
                     <div class="overlay-info">
                     <h4>${displayName}</h4>
-                    <p>${description}</p>
                     ${hasPosition ? `<small>Position saved: (${overlay.position.x}, ${overlay.position.y})</small>` : ''}
                     </div>
                     <div class="button-container">
@@ -45,6 +49,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 cardDiv.appendChild(card2Div);
                 overlayList.appendChild(cardDiv);
+
+                // Add click event for preview
+                cardDiv.addEventListener('click', function(e) {
+                    // Prevent click if the user clicked on a button
+                    if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
+                        return;
+                    }
+                    
+                    // Update the active card
+                    document.querySelectorAll('.card').forEach(card => card.classList.remove('active'));
+                    cardDiv.classList.add('active');
+                    document.querySelectorAll('.card2').forEach(card2 => card2.classList.remove('active'));
+                    card2Div.classList.add('active');
+                    
+                    // Show the preview
+                    showPreview(
+                        this.getAttribute('data-name'),
+                        this.getAttribute('data-description'),
+                        this.getAttribute('data-preview')
+                    );
+                });
                 
                 // Add event listener to toggle button after appending to DOM
                 setTimeout(() => {
@@ -88,6 +113,14 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Check for actually active overlays and update UI
             syncActiveOverlays();
+            
+            // Auto-select the first overlay to display preview
+            if (overlays.length > 0) {
+                const firstCard = document.querySelector('.card');
+                if (firstCard) {
+                    firstCard.click();
+                }
+            }
         });
 
     // Check if we're in positioning mode and show the save button
@@ -96,6 +129,64 @@ document.addEventListener('DOMContentLoaded', function() {
         createSavePositionButton(positioningInfo.displayName, positioningInfo.folderName);
     }
 });
+
+// Function to show overlay preview
+function showPreview(name, description, previewUrl) {
+    const previewContent = document.querySelector('.preview-content');
+    const previewPlaceholder = document.querySelector('.preview-placeholder');
+    
+    // Update preview content
+    document.getElementById('previewTitle').textContent = name;
+    document.getElementById('previewDescription').textContent = description;
+    
+    const previewImg = document.getElementById('previewGif');
+    const previewContainer = previewImg.parentElement;
+    
+    if (previewUrl) {
+        // Show the image and hide the "no preview" message
+        previewImg.style.display = 'block';
+        if (document.getElementById('noPreviewMessage')) {
+            document.getElementById('noPreviewMessage').remove();
+        }
+        
+        previewImg.src = previewUrl;
+        previewImg.alt = `${name} Preview`;
+        
+        // Handle image load error
+        previewImg.onerror = function() {
+            showNoPreviewMessage(previewContainer, previewImg);
+        };
+    } else {
+        // No preview URL available
+        showNoPreviewMessage(previewContainer, previewImg);
+    }
+    
+    // Show preview content, hide placeholder
+    previewPlaceholder.style.display = 'none';
+    previewContent.style.display = 'flex';
+}
+
+function showNoPreviewMessage(container, imgElement) {
+    // Hide the image element
+    imgElement.style.display = 'none';
+    
+    // Remove existing message if it exists
+    if (document.getElementById('noPreviewMessage')) {
+        document.getElementById('noPreviewMessage').remove();
+    }
+    
+    // Create a message element
+    const message = document.createElement('div');
+    message.id = 'noPreviewMessage';
+    message.className = 'no-preview-message';
+    message.innerHTML = `
+        <i class="fa-solid fa-eye-slash"></i>
+        <p>No preview available for this overlay</p>
+    `;
+    
+    // Add to container
+    container.appendChild(message);
+}
 
 // Function to synchronize UI with actual active overlays
 function syncActiveOverlays() {
