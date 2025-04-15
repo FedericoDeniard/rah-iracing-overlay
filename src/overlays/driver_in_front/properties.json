@@ -1,0 +1,15 @@
+{
+    "name": "driver_in_front",
+    "display_name": "Driver in Front",
+    "resolution": {
+        "width": 640,
+        "height": 180
+    },
+    "position": {
+        "x": 0,
+        "y": 0
+    },
+    "dpi_info": {
+        "scale": 1
+    }
+}

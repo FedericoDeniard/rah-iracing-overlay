@@ -150,7 +150,7 @@ class OverlayWindow:
             dict: Arguments for webview.create_window
         """
         window_args = {
-            "title": "iRacing Overlay",
+            "title": "RAH iRacing Overlay",
             "url": self.url,
             "width": self.width,
             "height": self.height,
