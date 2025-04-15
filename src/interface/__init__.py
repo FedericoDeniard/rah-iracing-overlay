@@ -48,13 +48,34 @@ def get_overlays():
                 description = properties.get('description', 'No description available.')
                 position = properties.get('position', None)
                 dpi_info = properties.get('dpi_info', {'scale': 1.0})
+                
+                # Look for preview GIFs in the overlay's static/images folder
+                preview_gif = properties.get('preview_gif', None)
+                if not preview_gif:
+                    # Check static/images folder for preview.gif (correct path)
+                    images_folder = os.path.join(overlay_path, 'static', 'images')
+                    if os.path.exists(images_folder):
+                        preview_file = os.path.join(images_folder, 'preview.gif')
+                        if os.path.exists(preview_file):
+                            # Use relative URL for the frontend
+                            preview_gif = f"/overlay/{name}/static/images/preview.gif"
+                    
+                    # Fallback to static folder if not found
+                    if not preview_gif:
+                        static_folder = os.path.join(overlay_path, 'static')
+                        if os.path.exists(static_folder):
+                            preview_file = os.path.join(static_folder, 'preview.gif')
+                            if os.path.exists(preview_file):
+                                preview_gif = f"/overlay/{name}/static/preview.gif"
+                
                 overlays.append({
                     'display_name': display_name,
                     'folder_name': name,
                     'description': description,
                     'url': f"http://127.0.0.1:8081/overlay/{name}",
                     'position': position,
-                    'dpi_info': dpi_info
+                    'dpi_info': dpi_info,
+                    'preview_gif': preview_gif
                 })
     return jsonify(overlays)
 

@@ -1,20 +1,18 @@
 import os
 import sys
 import platform
+import time
+import threading
 import logging
+from typing import List, Dict, Optional, Any, Union
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+using_fallback_mode = False
 
 if platform.system() == 'Windows':
     os.environ['EVENTLET_NO_GREENDNS'] = 'yes'
     
     if getattr(sys, 'frozen', False):
         os.environ['EVENTLET_THREADPOOL_SIZE'] = '30'
-
-using_fallback_mode = False
 
 try:
     import eventlet
@@ -33,9 +31,7 @@ except Exception as e:
         logging.info("Falling back to pure threading mode")
     using_fallback_mode = True
 
-import time
-import threading
-from flask import Flask, send_from_directory, current_app
+from flask import Flask, send_from_directory
 
 if not using_fallback_mode:
     try:
@@ -56,14 +52,16 @@ from data_provider import DataProvider
 from interface import interface_bp
 from overlays import overlays_bp
 
-def resource_path(relative_path):
-    """Get absolute path to resource, working for both development and PyInstaller environments.
+
+def resource_path(relative_path: str) -> str:
+    """
+    Get absolute path to resource, works for dev and for PyInstaller.
     
     Args:
         relative_path: The relative path to the resource
         
     Returns:
-        str: The absolute path to the resource
+        The absolute path to the resource
     """
     try:
         base_path = sys._MEIPASS
@@ -71,127 +69,130 @@ def resource_path(relative_path):
         base_path = os.path.abspath(os.path.dirname(__file__))
     return os.path.join(base_path, relative_path)
 
+
 class TelemetryNamespace(Namespace):
-    """Socket.IO namespace for telemetry-related communications."""
+    """Socket.IO namespace for telemetry data."""
     
-    def on_connect(self):
-        """Handle client connection event."""
+    def on_connect(self) -> None:
+        """Handle client connection to telemetry namespace."""
         logging.info("Client connected to telemetry namespace")
 
-    def on_disconnect(self):
-        """Handle client disconnection event."""
+    def on_disconnect(self) -> None:
+        """Handle client disconnection from telemetry namespace."""
         logging.info("Client disconnected from telemetry namespace")
 
+
 class LapPaceNamespace(Namespace):
-    """Socket.IO namespace for lap pace-related communications."""
+    """Socket.IO namespace for lap pace data."""
     
-    def on_connect(self):
-        """Handle client connection event."""
+    def on_connect(self) -> None:
+        """Handle client connection to lap pace namespace."""
         logging.info("Client connected to lap pace namespace")
 
-    def on_disconnect(self):
-        """Handle client disconnection event."""
+    def on_disconnect(self) -> None:
+        """Handle client disconnection from lap pace namespace."""
         logging.info("Client disconnected from lap pace namespace")
 
+
 class WebInterface:
-    """Manages the web interface for displaying telemetry overlays.
+    """
+    Manages the web interface for displaying iRacing telemetry overlays.
     
-    This class handles web server initialization, socket.io communications,
-    and real-time data transmission to overlays.
+    This class handles the web server, WebSocket connections, and data 
+    transmission between the iRacing sim and the overlay interface.
     """
 
-    def __init__(self, selected_overlays=None):
-        """Initialize the web interface with selected overlays.
+    def __init__(self, selected_overlays: Optional[List[str]] = None) -> None:
+        """
+        Initialize the web interface.
         
         Args:
-            selected_overlays: List of overlay identifiers to activate
+            selected_overlays: List of overlay names to enable
         """
         self.selected_overlays = selected_overlays or []
         self.app = Flask(__name__)
         self.app.register_blueprint(interface_bp, url_prefix='/')
         self.app.register_blueprint(overlays_bp, url_prefix='/overlay')
         
-        socketio_kwargs = self._configure_socketio()
-        self.socketio = SocketIO(self.app, **socketio_kwargs)
+        self._configure_socketio()
         self.data_provider = DataProvider()
-        
-        # Store app context for thread access
-        self.app_context = self.app.app_context()
-        
         self._setup_routes()
         self.telemetry_thread = None
         self.shutdown_flag = False
-        self._register_namespaces()
         self._start_telemetry_thread()
+        self._setup_namespaces()
 
-    def _configure_socketio(self):
-        """Configure SocketIO settings based on environment.
+    def _configure_socketio(self) -> None:
+        """Configure the Socket.IO server with appropriate settings."""
+        socketio_kwargs = {}
         
-        Returns:
-            dict: Configuration parameters for SocketIO
-        """
         if using_fallback_mode or (platform.system() == 'Windows' and getattr(sys, 'frozen', False)):
-            logging.info("Using threading mode for SocketIO")
-            return {
+            socketio_kwargs = {
                 'async_mode': 'threading',
                 'ping_timeout': 60,
                 'ping_interval': 25,
                 'logger': True,
-                'engineio_logger': True,
-                'cors_allowed_origins': '*'  # Allow all origins for easier testing
+                'engineio_logger': True
             }
+            logging.info("Using threading mode for SocketIO")
         else:
+            socketio_kwargs = {'async_mode': 'eventlet'}
             logging.info("Using eventlet mode for SocketIO")
-            return {
-                'async_mode': 'eventlet',
-                'cors_allowed_origins': '*'  # Allow all origins for easier testing
-            }
+            
+        self.socketio = SocketIO(self.app, **socketio_kwargs)
 
-    def _register_namespaces(self):
-        """Register SocketIO namespaces for all selected overlays."""
+    def _setup_namespaces(self) -> None:
+        """Register Socket.IO namespaces for each enabled overlay."""
         for overlay in self.selected_overlays:
-            namespace_class = LapPaceNamespace if overlay == 'lap_pace' else TelemetryNamespace
-            self.socketio.on_namespace(namespace_class(f'/{overlay}'))
+            if overlay == 'lap_pace':
+                self.socketio.on_namespace(LapPaceNamespace(f'/{overlay}'))
+            else:
+                self.socketio.on_namespace(TelemetryNamespace(f'/{overlay}'))
 
-    def _setup_routes(self):
-        """Set up additional routes for serving common static files."""
+    def _setup_routes(self) -> None:
+        """
+        Set up additional routes for serving common static files.
+        """
         @self.app.route('/common/js/<path:filename>')
-        def serve_common_js(filename):
+        def serve_common_js(filename: str):
             common_js_folder = resource_path(os.path.join('common', 'js'))
             return send_from_directory(common_js_folder, filename)
 
-    def _start_telemetry_thread(self):
-        """Start a background thread to emit telemetry data."""
-        def telemetry_thread():
-            # Push an application context for the thread
-            with self.app_context:
-                while not self.shutdown_flag:
-                    try:
-                        if self.data_provider.is_connected:
-                            self._process_telemetry_data()
-                    except Exception as e:
-                        logging.error(f"Unexpected error in telemetry thread: {e}")
+    def _start_telemetry_thread(self) -> None:
+        """
+        Start a background thread to emit telemetry data.
+        """
+        def telemetry_thread() -> None:
+            """
+            Thread function that processes and emits telemetry data.
+            """
+            while not self.shutdown_flag:
+                try:
+                    if self.data_provider.is_connected:
+                        self._process_telemetry_data()
+                except Exception as e:
+                    logging.error(f"Unexpected error in telemetry thread: {e}")
                     
-                    # Use a small sleep time to reduce CPU usage
-                    time.sleep(0.01)
+                time.sleep(0.016)  # 60 FPS target
 
         self.telemetry_thread = threading.Thread(target=telemetry_thread)
         self.telemetry_thread.daemon = True
         self.telemetry_thread.start()
-    
-    def _process_telemetry_data(self):
-        """Process and emit telemetry data to connected clients."""
+        
+    def _process_telemetry_data(self) -> None:
+        """Process and emit telemetry and lap time data."""
         try:
             data = self.data_provider.get_telemetry_data()
             if data:
-                self._sanitize_and_emit_telemetry(data)
-            
+                self._normalize_and_emit_telemetry(data)
+                
             self._process_lap_times()
         except Exception as e:
             logging.error(f"Error in telemetry processing: {e}")
-    
-    def _sanitize_and_emit_telemetry(self, data):
-        """Sanitize telemetry data and emit to clients.
+            
+    def _normalize_and_emit_telemetry(self, data: Dict[str, Any]) -> None:
+        """
+        Ensure all telemetry values are of correct type and emit the data.
         
         Args:
             data: Raw telemetry data dictionary
@@ -208,8 +209,8 @@ class WebInterface:
                     data[key] = 0.0
         
         self.socketio.emit('telemetry_update', data, namespace='/input_telemetry')
-    
-    def _process_lap_times(self):
+        
+    def _process_lap_times(self) -> None:
         """Process and emit lap time data."""
         try:
             lap_times = self.data_provider.get_lap_times()
@@ -218,65 +219,70 @@ class WebInterface:
         except Exception as e:
             logging.error(f"Error getting lap times: {e}")
 
-    def run(self, host='127.0.0.1', port=8081):
-        """Run the Flask web server application.
+    def run(self, host: str = '127.0.0.1', port: int = 8081) -> None:
+        """
+        Run the Flask application.
         
         Args:
-            host: Host address to bind the server to
-            port: Port number to listen on
+            host: The hostname to listen on
+            port: The port of the webserver
         """
         self.data_provider.connect()
         
         if using_fallback_mode or (platform.system() == 'Windows' and getattr(sys, 'frozen', False)):
-            self._run_in_threading_mode(host, port)
+            self._run_with_threading(host, port)
         else:
-            self._run_in_eventlet_mode(host, port)
-    
-    def _run_in_threading_mode(self, host, port):
-        """Run server using threading mode.
+            self._run_with_eventlet(host, port)
+            
+    def _run_with_threading(self, host: str, port: int) -> None:
+        """
+        Run the server using threading mode.
         
         Args:
-            host: Host address
-            port: Port number
+            host: The hostname to listen on
+            port: The port of the webserver
         """
         try:
             logging.info("Starting SocketIO server with threading mode...")
-            self.socketio.run(self.app, host=host, port=port, debug=False, use_reloader=False, allow_unsafe_werkzeug=True)
+            self.socketio.run(self.app, host=host, port=port, debug=False, use_reloader=False)
         except TypeError as e:
             logging.error(f"Error with SocketIO run parameters: {e}")
             try:
-                self.socketio.run(self.app, host=host, port=port, allow_unsafe_werkzeug=True)
+                self.socketio.run(self.app, host=host, port=port)
             except Exception as e:
                 logging.critical(f"Critical error starting SocketIO server: {e}")
                 sys.exit(1)
         except Exception as e:
-            logging.critical(f"Error starting SocketIO server: {e}")
+            logging.error(f"Error starting SocketIO server: {e}")
             sys.exit(1)
-    
-    def _run_in_eventlet_mode(self, host, port):
-        """Run server using eventlet mode.
+            
+    def _run_with_eventlet(self, host: str, port: int) -> None:
+        """
+        Run the server using eventlet mode.
         
         Args:
-            host: Host address
-            port: Port number
+            host: The hostname to listen on
+            port: The port of the webserver
         """
         try:
-            self.socketio.run(self.app, host=host, port=port, debug=False, use_reloader=False)
+            self.socketio.run(self.app, host=host, port=port)
         except Exception as e:
             logging.warning(f"Error in eventlet mode, falling back to threading: {e}")
-            self.socketio = SocketIO(self.app, async_mode='threading', cors_allowed_origins='*')
-            self.socketio.run(self.app, host=host, port=port, debug=False, use_reloader=False, allow_unsafe_werkzeug=True)
+            self.socketio = SocketIO(self.app, async_mode='threading')
+            self.socketio.run(self.app, host=host, port=port, debug=False, use_reloader=False)
         
-    def shutdown(self):
-        """Shutdown the web interface properly, closing all connections and threads."""
+    def shutdown(self) -> None:
+        """
+        Shutdown the web interface properly.
+        """
         logging.info("Shutting down web interface...")
         
         self.shutdown_flag = True
         if self.telemetry_thread and self.telemetry_thread.is_alive():
             try:
                 self.telemetry_thread.join(timeout=2)
-            except Exception as e:
-                logging.error(f"Error joining telemetry thread: {e}")
+            except Exception:
+                pass
             
         if self.data_provider:
             self.data_provider.disconnect()

@@ -119,7 +119,7 @@ class OverlayWindow:
                 self.window.events.loaded += self.inject_scripts
                 self._start_position_tracking()
             
-            webview.start(gui='edgechromium', debug=False)
+            webview.start(gui='edgechromium', debug=True)
         except Exception as e:
             logging.error(f"Error creating overlay window: {e}")
     
@@ -189,7 +189,6 @@ class OverlayWindow:
                 except Exception as e:
                     logging.error(f"Error updating position in JavaScript: {e}")
                     
-                # Update every 100ms
                 time.sleep(0.1)
         except Exception as e:
             logging.error(f"Error in position tracker thread: {e}")
@@ -212,7 +211,6 @@ class OverlayWindow:
         scaled_x = int(x * self.dpi_scale)
         scaled_y = int(y * self.dpi_scale)
         
-        # Only update the position data in the window, UI updates are handled by position_reporter.js
         js = f"""
         if (!window.pywebview) {{
             window.pywebview = {{}};
@@ -236,7 +234,6 @@ class OverlayWindow:
             '/common/js/position_reporter.js'
         ]
         
-        # Create a script to sequentially load all required JS files
         js_loader = """
         function loadScriptsSequentially(scripts, callback) {
             if (scripts.length === 0) {
@@ -284,8 +281,7 @@ class OverlayWindow:
         """Inject all necessary JavaScript files and initialize them."""
         if not self.window or not self.folder_name:
             return
-        
-        # Load the external JS files with initializers
+    
         self._load_external_js_files()
     
     def on_closed_handler(self):
