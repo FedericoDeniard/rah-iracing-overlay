@@ -14,7 +14,7 @@ def check_requirements():
         print("Installing PyInstaller...")
         subprocess.check_call([sys.executable, "-m", "pip", "install", "pyinstaller"])
     
-    required_packages = ["irsdk", "flask", "flask_socketio", "eventlet", "pywebview", "dnspython"]
+    required_packages = ["pyirsdk", "flask", "flask_socketio", "eventlet", "pywebview", "dnspython"]
     for package in required_packages:
         try:
             __import__(package)
