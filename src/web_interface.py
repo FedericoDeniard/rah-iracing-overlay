@@ -8,7 +8,6 @@ from typing import List, Dict, Optional, Any, Union
 
 using_fallback_mode = False
 
-# Check if we're being forced to use threading mode
 force_threading = os.environ.get('FORCE_THREADING_MODE', 'false').lower() == 'true'
 
 if force_threading:
@@ -142,7 +141,7 @@ class WebInterface:
                 'ping_timeout': 60,
                 'ping_interval': 25,
                 'cors_allowed_origins': '*',
-                'logger': False,  # Disable verbose logging
+                'logger': False, 
                 'engineio_logger': False
             }
             logging.info("Using threading mode for SocketIO")

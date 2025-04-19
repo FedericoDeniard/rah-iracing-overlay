@@ -142,7 +142,7 @@ class DataProvider:
                 secs_left = float(self.ir_sdk['SessionTimeRemain'])
                 laps_left = max(int(secs_left / max(my_last, 1e-9)), 1)
 
-            target_pace = my_last - (gap_sec / laps_left) * 1.10   # 10 % margin
+            target_pace = my_last - (gap_sec / laps_left) * 1.10
 
             return {
                 "front_last_lap_time": round(front_last, 3),
