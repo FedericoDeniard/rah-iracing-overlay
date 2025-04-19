@@ -1,0 +1,117 @@
+body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: rgba(0, 0, 0, 0); 
+    font-family: Arial, sans-serif;
+}
+
+.driver-front-container {
+    background: rgba(15, 15, 15, 0.8);
+    border-radius: 12px;
+    padding: 15px;
+    width: 200px;
+    color: #f1f1f1;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.driver-header {
+    font-size: 16px;
+    font-weight: bold;
+    color: white;
+    margin-bottom: 12px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding-bottom: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.session-indicator {
+    font-size: 10px;
+    margin-left: 6px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    text-transform: uppercase;
+    font-weight: normal;
+    display: inline-block;
+    color: #fff;
+}
+
+.session-race {
+    background-color: #ff3b30;
+}
+
+.session-practice {
+    background-color: #4cd964;
+}
+
+.session-qualify {
+    background-color: #5ac8fa;
+}
+
+.driver-data-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.driver-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+}
+
+.info-label {
+    font-size: 14px;
+    color: #aaa;
+}
+
+.info-value {
+    font-size: 14px;
+    font-weight: bold;
+    color: white;
+}
+
+.info-value-container {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.delta-gap {
+    font-size: 12px;
+    opacity: 0;
+    transform: translateX(10px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.delta-gap.visible {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.delta-gap.positive {
+    color: #ff3b30;
+}
+
+.delta-gap.negative {
+    color: #4cd964;
+}
+
+#driver-name {
+    color: #4cd964;
+}
+
+#last-lap-time {
+    color: #5ac8fa;
+}
+
+#target-pace {
+    color: #ffcc00;
+}

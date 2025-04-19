@@ -1,5 +1,15 @@
 document.addEventListener("DOMContentLoaded", function() {
-    var socket = io('/input_telemetry');
+    var socket = io('/input_telemetry', {
+        reconnection: true,
+        reconnectionAttempts: Infinity,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+        timeout: 20000
+    });
+
+    // Track connection status
+    let isConnected = false;
+    let reconnectTimer = null;
 
     const canvas = document.getElementById("telemetry-graph");
     const ctx = canvas.getContext("2d");
@@ -12,14 +22,43 @@ document.addEventListener("DOMContentLoaded", function() {
 
     socket.on('connect', function() {
         console.log("Connected to telemetry namespace");
+        isConnected = true;
+        clearTimeout(reconnectTimer);
     });
 
     socket.on('telemetry_update', function(data) {
+        console.log("Received telemetry update");
         updateTelemetryData(data);
+    });
+
+    // Handle heartbeats to ensure connection is alive
+    socket.on('heartbeat', function(data) {
+        console.log("Heartbeat received");
     });
 
     socket.on('disconnect', function() {
         console.log("Disconnected from telemetry namespace");
+        isConnected = false;
+        
+        // Try to reconnect manually if socket.io reconnection fails
+        reconnectTimer = setTimeout(function() {
+            if (!isConnected) {
+                console.log("Manually attempting to reconnect...");
+                socket.connect();
+            }
+        }, 3000);
+    });
+    
+    socket.on('error', function(error) {
+        console.error("Socket error:", error);
+    });
+    
+    socket.on('reconnect_attempt', function() {
+        console.log("Attempting to reconnect...");
+    });
+    
+    socket.on('reconnect', function(attemptNumber) {
+        console.log("Reconnected after", attemptNumber, "attempts");
     });
 
     function updateTelemetryData(data) {

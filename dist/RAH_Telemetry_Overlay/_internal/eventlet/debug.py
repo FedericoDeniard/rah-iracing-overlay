@@ -35,12 +35,8 @@ class Spew:
             else:
                 name = '[unknown]'
                 try:
-                    src, offset = inspect.getsourcelines(frame)
-                    # The first line is line 1
-                    # But 0 may be returned when executing module-level code
-                    if offset == 0:
-                        offset = 1
-                    line = src[lineno - offset]
+                    src = inspect.getsourcelines(frame)
+                    line = src[lineno]
                 except OSError:
                     line = 'Unknown code named [%s].  VM instruction #%d' % (
                         frame.f_code.co_name, frame.f_lasti)

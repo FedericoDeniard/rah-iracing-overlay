@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Driver in Front Overlay</title>
+    <link rel="stylesheet" href="{{ url_for('overlays.serve_static', overlay_name='driver_in_front', filename='driver_in_front.css') }}">
+    <script src="{{ url_for('overlays.serve_static', overlay_name='driver_in_front', filename='driver_in_front.js') }}"></script>
+    <script src="{{ url_for('serve_common_js', filename='socket.io.min.js') }}"></script>
+</head>
+<body>
+    <div class="driver-front-container pywebview-drag-region">
+        <div class="driver-header">DRIVER AHEAD <span id="session-type" class="session-indicator"></span></div>
+        <div class="driver-data-container">
+            <div class="driver-info">
+                <div class="info-label" id="lap-time-label">Last Lap:</div>
+                <div class="info-value-container">
+                    <div class="info-value" id="last-lap-time">-</div>
+                    <div class="info-value delta-gap" id="lap-delta">-</div>
+                </div>
+            </div>
+            <div class="driver-info">
+                <div class="info-label" id="target-pace-label">Target Pace:</div>
+                <div class="info-value" id="target-pace">-</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

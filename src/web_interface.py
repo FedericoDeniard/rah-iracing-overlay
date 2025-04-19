@@ -8,28 +8,36 @@ from typing import List, Dict, Optional, Any, Union
 
 using_fallback_mode = False
 
-if platform.system() == 'Windows':
+# Check if we're being forced to use threading mode
+force_threading = os.environ.get('FORCE_THREADING_MODE', 'false').lower() == 'true'
+
+if force_threading:
+    using_fallback_mode = True
+    logging.info("Using threading mode due to FORCE_THREADING_MODE environment variable")
+
+elif platform.system() == 'Windows':
     os.environ['EVENTLET_NO_GREENDNS'] = 'yes'
     
     if getattr(sys, 'frozen', False):
         os.environ['EVENTLET_THREADPOOL_SIZE'] = '30'
 
-try:
-    import eventlet
-    if platform.system() == 'Windows':
-        eventlet.monkey_patch(os=False, thread=False, time=False)
-    else:
-        eventlet.monkey_patch()
-except ImportError as e:
-    logging.warning(f"Cannot import eventlet: {e}")
-    logging.info("Falling back to pure threading mode")
-    using_fallback_mode = True
-except Exception as e:
-    logging.warning(f"Error initializing eventlet: {e}")
-    if platform.system() == 'Windows' and getattr(sys, 'frozen', False):
-        logging.info("This is likely due to PyInstaller packaging issues with eventlet.")
+if not using_fallback_mode:
+    try:
+        import eventlet
+        if platform.system() == 'Windows':
+            eventlet.monkey_patch(os=False, thread=False, time=False)
+        else:
+            eventlet.monkey_patch()
+    except ImportError as e:
+        logging.warning(f"Cannot import eventlet: {e}")
         logging.info("Falling back to pure threading mode")
-    using_fallback_mode = True
+        using_fallback_mode = True
+    except Exception as e:
+        logging.warning(f"Error initializing eventlet: {e}")
+        if platform.system() == 'Windows' and getattr(sys, 'frozen', False):
+            logging.info("This is likely due to PyInstaller packaging issues with eventlet.")
+            logging.info("Falling back to pure threading mode")
+        using_fallback_mode = True
 
 from flask import Flask, send_from_directory
 
@@ -75,23 +83,25 @@ class TelemetryNamespace(Namespace):
     
     def on_connect(self) -> None:
         """Handle client connection to telemetry namespace."""
+        print("Client connected to telemetry namespace")
         logging.info("Client connected to telemetry namespace")
 
     def on_disconnect(self) -> None:
         """Handle client disconnection from telemetry namespace."""
+        print("Client disconnected from telemetry namespace")
         logging.info("Client disconnected from telemetry namespace")
 
 
-class LapPaceNamespace(Namespace):
-    """Socket.IO namespace for lap pace data."""
+class DriverInFrontNamespace(Namespace):
+    """Socket.IO namespace for driver in front data."""
     
     def on_connect(self) -> None:
-        """Handle client connection to lap pace namespace."""
-        logging.info("Client connected to lap pace namespace")
+        """Handle client connection to driver in front namespace."""
+        logging.info("Client connected to driver in front namespace")
 
     def on_disconnect(self) -> None:
-        """Handle client disconnection from lap pace namespace."""
-        logging.info("Client disconnected from lap pace namespace")
+        """Handle client disconnection from driver in front namespace."""
+        logging.info("Client disconnected from driver in front namespace")
 
 
 class WebInterface:
@@ -131,23 +141,47 @@ class WebInterface:
                 'async_mode': 'threading',
                 'ping_timeout': 60,
                 'ping_interval': 25,
-                'logger': True,
-                'engineio_logger': True
+                'cors_allowed_origins': '*',
+                'logger': False,  # Disable verbose logging
+                'engineio_logger': False
             }
             logging.info("Using threading mode for SocketIO")
         else:
-            socketio_kwargs = {'async_mode': 'eventlet'}
+            socketio_kwargs = {
+                'async_mode': 'eventlet',
+                'cors_allowed_origins': '*',
+            }
             logging.info("Using eventlet mode for SocketIO")
             
         self.socketio = SocketIO(self.app, **socketio_kwargs)
 
     def _setup_namespaces(self) -> None:
-        """Register Socket.IO namespaces for each enabled overlay."""
-        for overlay in self.selected_overlays:
-            if overlay == 'lap_pace':
-                self.socketio.on_namespace(LapPaceNamespace(f'/{overlay}'))
-            else:
+        """
+        Register Socket.IO namespaces for each overlay by automatically scanning the overlays directory.
+        """
+        overlays_dir = resource_path('overlays')
+        available_overlays = []
+        try:
+            for item in os.listdir(overlays_dir):
+                overlay_path = os.path.join(overlays_dir, item)
+                if os.path.isdir(overlay_path) and os.path.exists(os.path.join(overlay_path, f'{item}.html')):
+                    print(item)
+                    available_overlays.append(item)
+        except Exception as e:
+            logging.error(f"Error scanning overlays directory: {e}")
+
+        logging.info(f"Found overlays: {available_overlays}")
+
+        for overlay in available_overlays:
+            print(overlay)
+            if overlay == 'driver_in_front':
+                self.socketio.on_namespace(DriverInFrontNamespace(f'/{overlay}'))
+                print(f"Registered driver in front namespace: {overlay}")
+            elif overlay == 'input_telemetry':
                 self.socketio.on_namespace(TelemetryNamespace(f'/{overlay}'))
+                print(f"Registered telemetry namespace: {overlay}")
+
+        logging.info(f"Registered Socket.IO namespaces for overlays: {available_overlays}")
 
     def _setup_routes(self) -> None:
         """
@@ -168,12 +202,18 @@ class WebInterface:
             """
             while not self.shutdown_flag:
                 try:
+                    # Reconnect to iRacing if needed
+                    if not self.data_provider.is_connected:
+                        self.data_provider.connect()
+                        
+                    # Process telemetry if connected
                     if self.data_provider.is_connected:
                         self._process_telemetry_data()
+                            
                 except Exception as e:
                     logging.error(f"Unexpected error in telemetry thread: {e}")
                     
-                time.sleep(0.016)  # 60 FPS target
+                time.sleep(0.01)  # ~30 FPS
 
         self.telemetry_thread = threading.Thread(target=telemetry_thread)
         self.telemetry_thread.daemon = True
@@ -184,40 +224,53 @@ class WebInterface:
         try:
             data = self.data_provider.get_telemetry_data()
             if data:
-                self._normalize_and_emit_telemetry(data)
+                normalized_data = self._normalize_data(data)
                 
-            self._process_lap_times()
+                # Standard emission for all modes - keep it simple
+                try:
+                    self.socketio.emit('telemetry_update', normalized_data, namespace='/input_telemetry')
+                except Exception as e:
+                    logging.error(f"Error in telemetry processing: {e}")
+                
+                # Create driver in front data
+                driver_data = {
+                    'front_last_lap_time': data.get('front_last_lap_time', 0.0),
+                    'front_best_lap_time': data.get('front_best_lap_time', 0.0),
+                    'lap_delta': data.get('lap_delta', 0.0),
+                    'target_pace': data.get('target_pace', 0.0),
+                    'session_type': data.get('session_type', 'race')
+                }
+                
+                try:
+                    self.socketio.emit('driver_in_front_update', driver_data, namespace='/driver_in_front')
+                except Exception as e:
+                    logging.error(f"Error in driver in front processing: {e}")
+                
         except Exception as e:
             logging.error(f"Error in telemetry processing: {e}")
-            
-    def _normalize_and_emit_telemetry(self, data: Dict[str, Any]) -> None:
+    
+    def _normalize_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Ensure all telemetry values are of correct type and emit the data.
+        Normalize telemetry data to ensure all values are of correct type.
         
         Args:
             data: Raw telemetry data dictionary
+            
+        Returns:
+            Dict[str, Any]: Normalized data dictionary
         """
+        normalized = {}
         for key, value in data.items():
             if key == 'gear':
-                data[key] = int(value) if value is not None else 0
+                normalized[key] = int(value) if value is not None else 0
             elif value is None:
-                data[key] = 0.0
+                normalized[key] = 0.0
             else:
                 try:
-                    data[key] = float(value)
+                    normalized[key] = float(value)
                 except (TypeError, ValueError):
-                    data[key] = 0.0
-        
-        self.socketio.emit('telemetry_update', data, namespace='/input_telemetry')
-        
-    def _process_lap_times(self) -> None:
-        """Process and emit lap time data."""
-        try:
-            lap_times = self.data_provider.get_lap_times()
-            if lap_times and lap_times:
-                self.socketio.emit('lap_time_update', {'lap_time': lap_times[-1]}, namespace='/lap_pace')
-        except Exception as e:
-            logging.error(f"Error getting lap times: {e}")
+                    normalized[key] = 0.0
+        return normalized
 
     def run(self, host: str = '127.0.0.1', port: int = 8085) -> None:
         """
@@ -227,8 +280,10 @@ class WebInterface:
             host: The hostname to listen on
             port: The port of the webserver
         """
+        # Always connect to iRacing first
         self.data_provider.connect()
         
+        # Run the appropriate server mode
         if using_fallback_mode or (platform.system() == 'Windows' and getattr(sys, 'frozen', False)):
             self._run_with_threading(host, port)
         else:
@@ -243,9 +298,10 @@ class WebInterface:
             port: The port of the webserver
         """
         try:
-            logging.info("Starting SocketIO server with threading mode...")
-            self.socketio.run(self.app, host=host, port=port, debug=False, use_reloader=False)
+            logging.info(f"Starting SocketIO server with threading mode on {host}:{port}...")
+            self.socketio.run(self.app, host=host, port=port, debug=False, use_reloader=False, allow_unsafe_werkzeug=True)
         except TypeError as e:
+            # Fall back to simpler config if the newer parameters aren't supported
             logging.error(f"Error with SocketIO run parameters: {e}")
             try:
                 self.socketio.run(self.app, host=host, port=port)

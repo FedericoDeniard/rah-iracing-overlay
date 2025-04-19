@@ -6,8 +6,8 @@ import platform
 if platform.system() == 'Windows':
     # Patch environment before importing eventlet
     os.environ['EVENTLET_NO_GREENDNS'] = 'yes'
-    # Comment out the hub selection to match web_interface.py
-    # os.environ['EVENTLET_HUB'] = 'selectors'
+    # Force using threading mode for reliability
+    os.environ['FORCE_THREADING_MODE'] = 'true'
 
 from web_interface import WebInterface, using_fallback_mode
 from overlay_window import OverlayWindow

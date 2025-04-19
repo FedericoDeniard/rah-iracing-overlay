@@ -53,6 +53,31 @@ if not os.path.exists(app_path):
     print(f"Warning: {app_path} does not exist!")
     app_path = 'app.py'  # Fallback to relative path
 
+# Set the icon path for the executable
+ico_path = os.path.join(base_dir, 'interface', 'static', 'images', 'app_icon.ico')
+if not os.path.exists(ico_path):
+    print(f"Warning: Icon file {ico_path} does not exist!")
+    # Try to run the icon creation script
+    try:
+        print("Attempting to create icon file...")
+        create_ico_script = os.path.join(base_dir, 'create_ico.py')
+        if os.path.exists(create_ico_script):
+            import subprocess
+            subprocess.run([sys.executable, create_ico_script])
+            if os.path.exists(ico_path):
+                print(f"Successfully created icon file: {ico_path}")
+            else:
+                print("Icon creation script ran but icon file was not created.")
+                ico_path = None
+        else:
+            print(f"Icon creation script not found: {create_ico_script}")
+            ico_path = None
+    except Exception as e:
+        print(f"Error running icon creation script: {e}")
+        ico_path = None
+else:
+    print(f"Using existing icon file: {ico_path}")
+
 # Add additional hidden imports for Windows
 hidden_imports = [
     # Import all eventlet hub types
@@ -175,7 +200,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=None,
+    icon=ico_path,
 )
 
 coll = COLLECT(
