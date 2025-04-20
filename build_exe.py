@@ -6,22 +6,31 @@ import platform
 import time
 
 def check_requirements():
-    """Check if required packages are installed"""
+    """Check if required packages are installed with specific versions"""
     try:
         import PyInstaller
         print("PyInstaller found!")
     except ImportError:
         print("Installing PyInstaller...")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "pyinstaller"])
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "pyinstaller==6.5.0"])
     
-    required_packages = ["pyirsdk", "flask", "flask_socketio", "eventlet", "pywebview", "dnspython"]
-    for package in required_packages:
+    # Dictionary of required packages with their specific versions
+    required_packages = {
+        "pyirsdk": "1.3.5",
+        "flask": "3.0.3",
+        "flask_socketio": "5.4.1",
+        "eventlet": "0.37.0",
+        "pywebview": "4.4.1",
+        "dnspython": "2.4.2"
+    }
+    
+    for package, version in required_packages.items():
         try:
-            __import__(package)
+            module = __import__(package)
             print(f"{package} found!")
         except ImportError:
-            print(f"Installing {package}...")
-            subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+            print(f"Installing {package} version {version}...")
+            subprocess.check_call([sys.executable, "-m", "pip", "install", f"{package}=={version}"])
 
 def build_exe():
     """Build the executable using PyInstaller"""
