@@ -1,11 +1,12 @@
 # **RAH iRacing Overlay**
 
-**iRacing Input Telemetry Overlay** is an open-source Python-based project that provides real-time telemetry from iRacing, displaying input data through a web interface so you can put it on programs like OBS.
+**iRacing Input Telemetry Overlay** is an open-source Python-based project that provides real-time telemetry from iRacing, displaying input data both through a web interface so you can put it on programs like OBS or screen overlay for using it on your game.
 
 I just didn't wanted to pay for some overlays subcriptions to have the overlay that I actually wanted, so why not trying? I hope you feel the same, this is free of course ;)
 
 <p align="center">
-  <img src=https://github.com/RaulArcos/iracing-input-telemetry-overlay/blob/main/images/input-telemetry-gif.gif>
+  <img src=https://github.com/RaulArcos/rah-iracing-overlay/blob/development/images/input-telemetry.gif>
+  <img src=https://github.com/RaulArcos/rah-iracing-overlay/blob/development/images/interface.png  width="600">
 </p>
 
 ## **Table of Contents**
@@ -25,6 +26,7 @@ Before compiling, make sure you have the following installed:
 
 - **Python 3.10+**: Ensure you have Python installed. You can download it from [here](https://www.python.org/downloads/).
 - **iRacing SDK**: Install iRacing for telemetry data [here](https://github.com/kutu/pyirsdk.git).
+- **Requirements file**: You will find a requirements.txt file on the repo for you to get all the libraries.
   
 ### **1. Clone the Repository**
 
@@ -42,28 +44,22 @@ pip install -r requirements.txt
 ### **3. Compile into an EXE file**
 
 ```bash
-pyinstaller RAH_Telemetry_Overlay.spec
+python3.10.exe (or your version) build_exe.py
 ```
 
 ## **Usage**
 
-Just open the .exe file like a normal windows program, you will be welcomed by an easy interace to change the port (just in case you are using other overlay applications on the same port) and the framerate it should update.
+Just open the .exe file like a normal windows program, you will be welcomed by an easy interace to open any of the overlays, as well as modify its position or opening it on their web version to get the link for OBS.
 
 <p align="center">
-  <img src=https://github.com/user-attachments/assets/77a22083-824e-4408-a64e-4774321cbfa0>
+  <img src=https://github.com/RaulArcos/rah-iracing-overlay/blob/development/images/interface_with_movement.png  width="600">
 </p>
-
-Click start, on OBS, for example, add a web source and introduce the following URL: http://127.0.0.1:{your-selected-port}/input-telemetry
-
-You should now see the telemetry, enter iRacing and enjoy!
-
-## **Next Steps**
-
-For now, my next focus will be on making it posible to show up as a overlay on screen, so monitor iRacing users can make use of it on their own games.
 
 ## **Contributing**
 
 I hope you want to take part on this journey! Everyone is welcome to add diferent overlays to show interesting data like stadings positions, predicted points... you name it! These are the steps you should do to make this posible:
+
+Remember!! You will find another README file on /src/overlays with steps to implement new overlays as easy as posible!
 
 1. Fork the project.
 2. Clone your forked repository to your local machine.
