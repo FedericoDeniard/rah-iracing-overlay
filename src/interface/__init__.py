@@ -185,11 +185,6 @@ def report_window_position():
     position['x'] = int(position['x'])
     position['y'] = int(position['y'])
     
-    if position['x'] < 0:
-        position['x'] = 0
-    if position['y'] < 0:
-        position['y'] = 0
-    
     logging.info(f"Saving position for {folder_name}: x={position['x']}, y={position['y']} with DPI scale: {dpi_scale}")
     
     properties_path = os.path.join(os.path.dirname(__file__), '..', 'overlays', folder_name, 'properties.json')
