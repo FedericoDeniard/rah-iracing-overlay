@@ -12,7 +12,7 @@ def check_requirements():
         print("PyInstaller found!")
     except ImportError:
         print("Installing PyInstaller...")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "pyinstaller==6.5.0"])
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "pyinstaller"])
     
     # Dictionary of required packages with their specific versions
     required_packages = {
