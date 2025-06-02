@@ -55,6 +55,24 @@ Just open the .exe file like a normal windows program, you will be welcomed by a
   <img src=https://github.com/RaulArcos/rah-iracing-overlay/blob/development/images/interface_with_movement.png  width="600">
 </p>
 
+## Windows Security: Unblocking DLL Files
+
+If you encounter errors related to `Python.Runtime.dll` or other DLL files failing to load, it might be due to Windows blocking these files after being downloaded from another computer.
+It is always better to build your own version, but if you don't know or simply don't want to, you will have to do this.
+
+### Steps to Unblock DLLs:
+1. Navigate to the `.dll` files, e.g.:
+   - `\RAH_Telemetry_Overlay_0.2.1_internal\pythonnet\runtime\Python.Runtime.dll`
+   - all `.dll` files in `\RAH_Telemetry_Overlay_0.2.1_internal\webview\lib\`
+
+2. Right-click each `.dll` file and select **Properties**.
+
+3. In the **General** tab, check the **"Unblock"** checkbox at the bottom (if it’s visible).
+
+4. Click **OK**.
+
+This is needed because Windows may block DLL files that come from another computer, causing the program to fail to load them properly.
+
 ## **Contributing**
 
 I hope you want to take part on this journey! Everyone is welcome to add diferent overlays to show interesting data like stadings positions, predicted points... you name it! These are the steps you should do to make this posible:
