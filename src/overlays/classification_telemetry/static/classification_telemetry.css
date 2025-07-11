@@ -100,6 +100,14 @@ body {
   font-weight: bold;
 }
 
+#pts .pts-arrow {
+  color: green;
+  font-weight: bold;
+}
+#pts .pts-value {
+  color: green;
+}
+
 /* END */
 
 /* Save button styling */

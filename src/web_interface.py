@@ -102,6 +102,16 @@ class DriverInFrontNamespace(Namespace):
         """Handle client disconnection from driver in front namespace."""
         logging.info("Client disconnected from driver in front namespace")
 
+class ClassificationNamespace(Namespace):
+    """Socket.IO namespace for classification data."""
+    
+    def on_connect(self) -> None:
+        """Handle client connection to classification namespace."""
+        logging.info("Client connected to classification namespace")
+
+    def on_disconnect(self) -> None:
+        """Handle client disconnection from classification namespace."""
+        logging.info("Client disconnected from classification namespace")
 
 class WebInterface:
     """
@@ -179,7 +189,9 @@ class WebInterface:
             elif overlay == 'input_telemetry':
                 self.socketio.on_namespace(TelemetryNamespace(f'/{overlay}'))
                 print(f"Registered telemetry namespace: {overlay}")
-
+            elif overlay == 'classification_telemetry':
+                self.socketio.on_namespace(ClassificationNamespace(f'/{overlay}'))
+                print(f"Registered classification namespace: {overlay}")
         logging.info(f"Registered Socket.IO namespaces for overlays: {available_overlays}")
 
     def _setup_routes(self) -> None:
@@ -244,6 +256,10 @@ class WebInterface:
                     self.socketio.emit('driver_in_front_update', driver_data, namespace='/driver_in_front')
                 except Exception as e:
                     logging.error(f"Error in driver in front processing: {e}")
+                try:
+                    self.socketio.emit('classification_update', normalized_data, namespace='/classification_telemetry')
+                except Exception as e:
+                    logging.error(f"Error in classification processing: {e}")
                 
         except Exception as e:
             logging.error(f"Error in telemetry processing: {e}")
