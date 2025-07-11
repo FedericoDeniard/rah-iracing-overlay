@@ -1,0 +1,16 @@
+{
+    "name": "clasification_telemetry",
+    "display_name": "Clasification Telemetry",
+    "description": "Displays the clasification telemetry data like steering, throttle, brake, etc.",
+    "resolution": {
+        "width": 640,
+        "height": 500
+    },
+    "position": {
+        "x": 0,
+        "y": 0
+    },
+    "dpi_info": {
+        "scale": 1
+    }
+}

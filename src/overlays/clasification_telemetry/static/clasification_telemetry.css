@@ -1,0 +1,121 @@
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0); /* Fully transparent */
+  position: relative;
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+.clasification-container {
+  background: rgba(15, 15, 15, 0.8);
+  border-radius: 12px;
+  padding: 12px;
+  width: 600px;
+  cursor: move;
+  color: #f1f1f1;
+  font-family: Arial, sans-serif;
+  /* box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.8); */
+  pointer-events: auto;
+  z-index: 1000 !important; /* Lower than save button */
+  position: relative; /* Ensure this is relative for absolute positioning within */
+  transform: translateZ(0); /* Force GPU acceleration */
+  will-change: transform;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  isolation: isolate; /* Create a new stacking context */
+  contain: layout; /* Improve rendering performance */
+  font-size: 12px;
+}
+
+/* clasification */
+
+.classification-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #1c1c1c;
+}
+
+.classification-table th,
+.classification-table td {
+  padding: 2px;
+  text-align: left;
+  border-bottom: 1px solid #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.classification-table th {
+  background-color: #333;
+  font-weight: bold;
+}
+
+.classification-table tr:nth-child(even) {
+  background-color: #181818;
+}
+
+.classification-table tr:nth-child(odd) {
+  background-color: #1c1c1c;
+}
+
+.classification-table tr:hover {
+  background-color: #2a2a2a;
+}
+
+/* Cells */
+
+#position {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: #fff;
+  color: #000;
+  width: 20px;
+  height: 20px;
+  line-height: 20px; /* Same as height */
+  border-radius: 2px;
+  text-align: center;
+}
+
+#class {
+  display: flex;
+  justify-content: center;
+  background-color: green;
+  width: fit-content;
+  height: fit-content;
+  padding: 2px;
+  border-radius: 2px;
+  border: 1px solid #000;
+  color: #fff;
+  gap: 2px;
+}
+#class span {
+  padding: 2px;
+}
+#class span:last-child {
+  background-color: lightgreen;
+  font-weight: bold;
+}
+
+/* END */
+
+/* Save button styling */
+#position-save-button {
+  position: absolute !important;
+  top: 10px !important;
+  right: 10px !important;
+  z-index: 10000 !important;
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4) !important; */
+  border-radius: 6px !important;
+  background-color: rgba(46, 204, 113, 0.95) !important;
+  border: 1px solid white !important;
+  padding: 6px 10px !important;
+  font-size: 12px !important;
+  font-weight: bold !important;
+  color: white !important;
+}
